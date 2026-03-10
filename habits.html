@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habits Tracker</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body, #root {
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1f2937;
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-card h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .error {
+            color: #ef4444;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .dashboard {
+            background: #f9fafb;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 20px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .navbar-links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .navbar-links a:hover {
+            background: #f3f4f6;
+        }
+
+        .navbar-links button {
+            padding: 8px 16px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .btn-sm {
+            padding: 10px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-sm:hover {
+            background: #5568d3;
+        }
+
+        .habit-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .habit-info {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .habit-info h3 {
+            font-size: 18px;
+            color: #0f172a;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .habit-count {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .habit-date {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .habit-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .counter-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .counter-btn-increment {
+            background: #10b981;
+            color: white;
+        }
+
+        .counter-btn-increment:hover {
+            background: #059669;
+            transform: scale(1.05);
+        }
+
+        .counter-btn-decrement {
+            background: #ef4444;
+            color: white;
+        }
+
+        .counter-btn-decrement:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .btn-delete {
+            background: #6b7280;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background: #4b5563;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+        }
+
+        .history-list {
+            margin-top: 16px;
+        }
+
+        .history-item {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .history-time {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .history-change-positive {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .history-change-negative {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .add-habit-form {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .add-habit-form input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .add-habit-form button {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ===== CONFIGURATION =====
+        const SUPABASE_URL = "https://your-project.supabase.co";
+        const SUPABASE_KEY = "your-public-key-here";
+
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ===== MAIN APP =====
+        function App() {
+            const [user, setUser] = React.useState(null);
+            const [loading, setLoading] = React.useState(true);
+
+            React.useEffect(() => {
+                checkUser();
+                const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+                    setUser(session?.user || null);
+                });
+                return () => authListener?.subscription?.unsubscribe();
+            }, []);
+
+            const checkUser = async () => {
+                const { data } = await supabase.auth.getSession();
+                setUser(data.session?.user || null);
+                setLoading(false);
+            };
+
+            if (loading) return <div className="loading">Loading...</div>;
+
+            if (!user) {
+                return <AuthPage onAuthSuccess={(u) => setUser(u)} />;
+            }
+
+            return (
+                <div className="dashboard">
+                    <nav className="navbar">
+                        <h1>🎯 Habits Tracker</h1>
+                        <div className="navbar-links">
+                            <a href="index.html">← Back to Dashboard</a>
+                            <button onClick={() => handleLogout()}>Logout</button>
+                        </div>
+                    </nav>
+
+                    <div className="content">
+                        <HabitsView user={user} />
+                    </div>
+                </div>
+            );
+
+            async function handleLogout() {
+                await supabase.auth.signOut();
+                setUser(null);
+            }
+        }
+
+        // ===== AUTHENTICATION =====
+        function AuthPage({ onAuthSuccess }) {
+            const [email, setEmail] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [isSignUp, setIsSignUp] = React.useState(false);
+            const [error, setError] = React.useState('');
+            const [loading, setLoading] = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError('');
+
+                try {
+                    if (isSignUp) {
+                        const { error: err } = await supabase.auth.signUp({ email, password });
+                        if (err) throw err;
+                        setError('Check your email to confirm your account!');
+                    } else {
+                        const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+                        if (err) throw err;
+                        onAuthSuccess(data.user);
+                    }
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="auth-container">
+                    <div className="auth-card">
+                        <h1>{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
+                        {error && <div className="error">{error}</div>}
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Password</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                                {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+                            </button>
+                        </form>
+
+                        <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => {
+                                setIsSignUp(!isSignUp);
+                                setError('');
+                            }}
+                        >
+                            {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // ===== HABITS VIEW =====
+        function HabitsView({ user }) {
+            const [habits, setHabits] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+            const [newHabitName, setNewHabitName] = React.useState('');
+            const [selectedHabit, setSelectedHabit] = React.useState(null);
+            const [showHistory, setShowHistory] = React.useState(false);
+
+            React.useEffect(() => {
+                loadHabits();
+            }, []);
+
+            const loadHabits = async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('habits')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .order('created_at', { ascending: false });
+
+                    if (error) throw error;
+                    setHabits(data || []);
+                } catch (err) {
+                    console.error('Error loading habits:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleAddHabit = async (e) => {
+                e.preventDefault();
+                if (!newHabitName.trim()) return;
+
+                try {
+                    const { error } = await supabase.from('habits').insert({
+                        user_id: user.id,
+                        name: newHabitName,
+                        count: 0
+                    });
+
+                    if (error) throw error;
+                    setNewHabitName('');
+                    loadHabits();
+                } catch (err) {
+                    console.error('Error adding habit:', err);
+                }
+            };
+
+            const handleIncrement = async (habitId) => {
+                try {
+                    const habit = habits.find(h => h.id === habitId);
+                    
+                    await supabase
+                        .from('habits')
+                        .update({ count: habit.count + 1 })
+                        .eq('id', habitId);
+
+                    await supabase.from('habit_logs').insert({
+                        habit_id: habitId,
+                        change: 1,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    loadHabits();
+                } catch (err) {
+                    console.error('Error incrementing habit:', err);
+                }
+            };
+
+            const handleDecrement = async (habitId) => {
+                try {
+                    const habit = habits.find(h => h.id === habitId);
+                    if (habit.count > 0) {
+                        await supabase
+                            .from('habits')
+                            .update({ count: habit.count - 1 })
+                            .eq('id', habitId);
+
+                        await supabase.from('habit_logs').insert({
+                            habit_id: habitId,
+                            change: -1,
+                            timestamp: new Date().toISOString()
+                        });
+
+                        loadHabits();
+                    }
+                } catch (err) {
+                    console.error('Error decrementing habit:', err);
+                }
+            };
+
+            const handleDeleteHabit = async (habitId) => {
+                if (window.confirm('Delete this habit?')) {
+                    try {
+                        await supabase.from('habits').delete().eq('id', habitId);
+                        loadHabits();
+                    } catch (err) {
+                        console.error('Error deleting habit:', err);
+                    }
+                }
+            };
+
+            if (loading) return <div className="loading">Loading habits...</div>;
+
+            return (
+                <>
+                    <div className="section-header">
+                        <h2>My Habits</h2>
+                    </div>
+
+                    <div className="add-habit-form">
+                        <form onSubmit={handleAddHabit}>
+                            <input
+                                type="text"
+                                value={newHabitName}
+                                onChange={(e) => setNewHabitName(e.target.value)}
+                                placeholder="Add a new habit (e.g., 'Brush teeth', 'Exercise', 'Read')"
+                                required
+                            />
+                            <button type="submit" className="btn btn-primary">
+                                + Add Habit
+                            </button>
+                        </form>
+                    </div>
+
+                    {habits.length === 0 ? (
+                        <div className="empty-state">
+                            <h3>No habits yet</h3>
+                            <p>Add your first habit above to get started!</p>
+                        </div>
+                    ) : (
+                        <div>
+                            {habits.map(habit => (
+                                <div key={habit.id}>
+                                    <div className="habit-card">
+                                        <div className="habit-info" onClick={() => {
+                                            setSelectedHabit(habit);
+                                            setShowHistory(true);
+                                        }}>
+                                            <h3>{habit.name}</h3>
+                                            <div className="habit-count">Count: {habit.count}</div>
+                                            <div className="habit-date">
+                                                Created: {new Date(habit.created_at).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                        <div className="habit-controls">
+                                            <button 
+                                                className="counter-btn counter-btn-decrement"
+                                                onClick={() => handleDecrement(habit.id)}
+                                            >
+                                                −
+                                            </button>
+                                            <button 
+                                                className="counter-btn counter-btn-increment"
+                                                onClick={() => handleIncrement(habit.id)}
+                                            >
+                                                +
+                                            </button>
+                                            <button 
+                                                className="btn-delete"
+                                                onClick={() => handleDeleteHabit(habit.id)}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {showHistory && selectedHabit && (
+                        <HabitDetailModal
+                            habit={selectedHabit}
+                            onClose={() => {
+                                setShowHistory(false);
+                                setSelectedHabit(null);
+                            }}
+                        />
+                    )}
+                </>
+            );
+        }
+
+        // ===== HABIT DETAIL MODAL =====
+        function HabitDetailModal({ habit, onClose }) {
+            const [logs, setLogs] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+
+            React.useEffect(() => {
+                loadLogs();
+            }, [habit.id]);
+
+            const loadLogs = async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('habit_logs')
+                        .select('*')
+                        .eq('habit_id', habit.id)
+                        .order('timestamp', { ascending: false });
+
+                    if (error) throw error;
+                    setLogs(data || []);
+                } catch (err) {
+                    console.error('Error loading logs:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="modal">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <div>
+                                <h2>{habit.name}</h2>
+                                <div style={{ marginTop: '8px', fontSize: '14px', color: '#667eea', fontWeight: '600' }}>
+                                    Total Count: {habit.count}
+                                </div>
+                            </div>
+                            <button className="close-btn" onClick={onClose}>✕</button>
+                        </div>
+
+                        {loading ? (
+                            <div className="loading">Loading history...</div>
+                        ) : (
+                            <>
+                                <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#0f172a' }}>
+                                    History
+                                </h3>
+                                {logs.length === 0 ? (
+                                    <div style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>
+                                        No history yet. Start counting!
+                                    </div>
+                                ) : (
+                                    <div className="history-list">
+                                        {logs.map((log, idx) => {
+                                            const date = new Date(log.timestamp);
+                                            const timeString = date.toLocaleString();
+                                            const isPositive = log.change > 0;
+                                            
+                                            return (
+                                                <div key={idx} className="history-item">
+                                                    <div className="history-time">{timeString}</div>
+                                                    <div className={isPositive ? 'history-change-positive' : 'history-change-negative'}>
+                                                        {isPositive ? '+' : ''}{log.change}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Render app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

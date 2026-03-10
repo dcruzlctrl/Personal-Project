@@ -63,16 +63,17 @@
             font-size: 14px;
         }
 
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             font-size: 14px;
+            font-family: inherit;
             transition: all 0.2s;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -134,7 +135,27 @@
             font-weight: 600;
         }
 
-        .navbar button {
+        .navbar-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .navbar-links a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .navbar-links a:hover {
+            background: #eff6ff;
+        }
+
+        .navbar-links button {
             padding: 8px 16px;
             background: #ef4444;
             color: white;
@@ -193,6 +214,18 @@
             background: #dc2626;
         }
 
+        .btn-sm-edit {
+            background: #f59e0b;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-right: 6px;
+        }
+
+        .btn-sm-edit:hover {
+            background: #d97706;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -229,6 +262,13 @@
             margin-top: 16px;
             padding-top: 12px;
             border-top: 1px solid #f3f4f6;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
         }
 
         .badge {
@@ -252,6 +292,11 @@
         .badge-completed {
             background: #d1fae5;
             color: #065f46;
+        }
+
+        .badge-in-progress {
+            background: #dbeafe;
+            color: #1e40af;
         }
 
         .modal {
@@ -336,6 +381,16 @@
             text-decoration: line-through;
         }
 
+        .task-item-content {
+            flex: 1;
+        }
+
+        .task-item-actions {
+            display: flex;
+            gap: 6px;
+            margin-left: 8px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -392,22 +447,19 @@
 
     <script type="text/babel">
         // ===== CONFIGURATION =====
-        // Replace these with your Supabase credentials
-        const SUPABASE_URL = "https://wthjcbkfpjgjsqyqcghx.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_Que8SpJa0CzVEQbgC8Mv5A_mjJfTu_B";
+        const SUPABASE_URL = "https://your-project.supabase.co";
+        const SUPABASE_KEY = "your-public-key-here";
 
-        // Initialize Supabase
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ===== MAIN APP COMPONENT =====
+        // ===== MAIN APP =====
         function App() {
             const [user, setUser] = React.useState(null);
             const [loading, setLoading] = React.useState(true);
-            const [view, setView] = React.useState('projects'); // 'projects' or 'project-detail'
+            const [view, setView] = React.useState('projects');
             const [selectedProject, setSelectedProject] = React.useState(null);
 
-            // Check if user is logged in on mount
             React.useEffect(() => {
                 checkUser();
                 const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
@@ -432,7 +484,13 @@
                 <div className="dashboard">
                     <nav className="navbar">
                         <h1>📊 Project Dashboard</h1>
-                        <button onClick={() => handleLogout()}>Logout</button>
+                        <div className="navbar-links">
+                            {view !== 'projects' && (
+                                <a onClick={() => setView('projects')}>← Projects</a>
+                            )}
+                            <a href="habits.html" target="_blank" rel="noopener noreferrer">🎯 Habits</a>
+                            <button onClick={() => handleLogout()}>Logout</button>
+                        </div>
                     </nav>
 
                     <div className="dashboard-content">
@@ -460,7 +518,7 @@
             }
         }
 
-        // ===== AUTHENTICATION COMPONENT =====
+        // ===== AUTHENTICATION =====
         function AuthPage({ onAuthSuccess }) {
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
@@ -537,7 +595,7 @@
             );
         }
 
-        // ===== PROJECTS VIEW COMPONENT =====
+        // ===== PROJECTS VIEW =====
         function ProjectsView({ user, onSelectProject }) {
             const [projects, setProjects] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
@@ -588,6 +646,7 @@
                                     project={project}
                                     onSelect={() => onSelectProject(project)}
                                     onDelete={() => deleteProject(project.id)}
+                                    onRefresh={loadProjects}
                                 />
                             ))}
                         </div>
@@ -614,9 +673,10 @@
             }
         }
 
-        // ===== PROJECT CARD COMPONENT =====
-        function ProjectCard({ project, onSelect, onDelete }) {
+        // ===== PROJECT CARD =====
+        function ProjectCard({ project, onSelect, onDelete, onRefresh }) {
             const [taskCount, setTaskCount] = React.useState(0);
+            const [showEditModal, setShowEditModal] = React.useState(false);
 
             React.useEffect(() => {
                 supabase
@@ -627,29 +687,50 @@
             }, [project.id]);
 
             return (
-                <div className="card" onClick={onSelect} style={{ cursor: 'pointer' }}>
-                    <h3>{project.name}</h3>
-                    <p>{project.description || 'No description'}</p>
-                    <div className="card-meta">
-                        <span className={`badge badge-${project.status}`}>
-                            {project.status}
-                        </span>
-                        <button className="btn-sm-danger" onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete();
-                        }}>
-                            Delete
-                        </button>
-                    </div>
-                    <div className="tasks-section">
-                        <h4>Tasks ({taskCount})</h4>
-                        {project.end_date && (
-                            <div className="date-display">
-                                Due: {new Date(project.end_date).toLocaleDateString()}
+                <>
+                    <div className="card" onClick={onSelect} style={{ cursor: 'pointer' }}>
+                        <h3>{project.name}</h3>
+                        <p>{project.description || 'No description'}</p>
+                        <div className="card-meta">
+                            <span className={`badge badge-${project.status}`}>
+                                {project.status}
+                            </span>
+                            <div className="card-actions">
+                                <button className="btn-sm-edit" onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowEditModal(true);
+                                }}>
+                                    Edit
+                                </button>
+                                <button className="btn-sm-danger" onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete();
+                                }}>
+                                    Delete
+                                </button>
                             </div>
-                        )}
+                        </div>
+                        <div className="tasks-section">
+                            <h4>Tasks ({taskCount})</h4>
+                            {project.end_date && (
+                                <div className="date-display">
+                                    Due: {new Date(project.end_date).toLocaleDateString()}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+
+                    {showEditModal && (
+                        <EditProjectModal
+                            project={project}
+                            onClose={() => setShowEditModal(false)}
+                            onSuccess={() => {
+                                setShowEditModal(false);
+                                onRefresh();
+                            }}
+                        />
+                    )}
+                </>
             );
         }
 
@@ -751,6 +832,126 @@
             );
         }
 
+        // ===== EDIT PROJECT MODAL =====
+        function EditProjectModal({ project, onClose, onSuccess }) {
+            const [name, setName] = React.useState(project.name);
+            const [description, setDescription] = React.useState(project.description || '');
+            const [startDate, setStartDate] = React.useState(project.start_date || '');
+            const [endDate, setEndDate] = React.useState(project.end_date || '');
+            const [status, setStatus] = React.useState(project.status);
+            const [loading, setLoading] = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+
+                try {
+                    const { error } = await supabase
+                        .from('projects')
+                        .update({
+                            name,
+                            description,
+                            start_date: startDate || null,
+                            end_date: endDate || null,
+                            status
+                        })
+                        .eq('id', project.id);
+
+                    if (error) throw error;
+                    onSuccess();
+                } catch (err) {
+                    console.error('Error updating project:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="modal">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Edit Project</h2>
+                            <button className="close-btn" onClick={onClose}>✕</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Project Name *</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    rows="3"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontFamily: 'inherit'
+                                    }}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Start Date</label>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>End Date</label>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Status</label>
+                                <select 
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+
+                            <div className="modal-actions">
+                                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Updating...' : 'Update Project'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
         // ===== PROJECT DETAIL VIEW =====
         function ProjectDetailView({ project, onBack }) {
             const [tasks, setTasks] = React.useState([]);
@@ -816,6 +1017,7 @@
                                     task={task}
                                     onDelete={() => deleteTask(task.id)}
                                     onStatusChange={(status) => updateTaskStatus(task.id, status)}
+                                    onRefresh={loadData}
                                 />
                             ))}
                         </div>
@@ -863,7 +1065,10 @@
             }
 
             async function updateTaskStatus(taskId, status) {
-                await supabase.from('tasks').update({ status }).eq('id', taskId);
+                await supabase
+                    .from('tasks')
+                    .update({ status })
+                    .eq('id', taskId);
                 loadData();
             }
 
@@ -875,53 +1080,71 @@
             }
         }
 
-        // ===== TASK ITEM COMPONENT =====
-        function TaskItem({ task, onDelete, onStatusChange }) {
+        // ===== TASK ITEM =====
+        function TaskItem({ task, onDelete, onStatusChange, onRefresh }) {
+            const [showEditModal, setShowEditModal] = React.useState(false);
             const isCompleted = task.status === 'completed';
 
             return (
-                <div className={`card ${isCompleted ? 'completed' : ''}`} style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                        <div style={{ flex: 1 }}>
-                            <h4 style={{ color: '#0f172a', marginBottom: '4px' }}>
-                                {task.title}
-                            </h4>
-                            {task.description && (
-                                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px' }}>
-                                    {task.description}
-                                </p>
-                            )}
-                            <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#9ca3af' }}>
-                                {task.due_date && <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>}
-                                <span className={`badge badge-${task.priority}`}>
-                                    {task.priority}
-                                </span>
-                                <span className={`badge badge-${task.status}`}>
-                                    {task.status}
-                                </span>
+                <>
+                    <div className={`card ${isCompleted ? 'completed' : ''}`} style={{ marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '16px' }}>
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{ color: '#0f172a', marginBottom: '4px' }}>
+                                    {task.title}
+                                </h4>
+                                {task.description && (
+                                    <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px' }}>
+                                        {task.description}
+                                    </p>
+                                )}
+                                <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#9ca3af', flexWrap: 'wrap' }}>
+                                    {task.due_date && <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>}
+                                    <span className={`badge badge-${task.priority}`}>
+                                        {task.priority}
+                                    </span>
+                                    <span className={`badge badge-${task.status}`}>
+                                        {task.status}
+                                    </span>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                <select 
+                                    value={task.status}
+                                    onChange={(e) => onStatusChange(e.target.value)}
+                                    style={{
+                                        padding: '6px 8px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #e5e7eb',
+                                        cursor: 'pointer',
+                                        fontSize: '12px'
+                                    }}
+                                >
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                                <button className="btn-sm-edit" onClick={() => setShowEditModal(true)}>
+                                    Edit
+                                </button>
+                                <button className="btn-sm-danger" onClick={onDelete}>
+                                    Delete
+                                </button>
                             </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
-                            <select 
-                                value={task.status}
-                                onChange={(e) => onStatusChange(e.target.value)}
-                                style={{
-                                    padding: '6px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #e5e7eb',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <option value="pending">Pending</option>
-                                <option value="in-progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                            <button className="btn-sm-danger" onClick={onDelete}>
-                                Delete
-                            </button>
-                        </div>
                     </div>
-                </div>
+
+                    {showEditModal && (
+                        <EditTaskModal
+                            task={task}
+                            onClose={() => setShowEditModal(false)}
+                            onSuccess={() => {
+                                setShowEditModal(false);
+                                onRefresh();
+                            }}
+                        />
+                    )}
+                </>
             );
         }
 
@@ -1033,7 +1256,137 @@
             );
         }
 
-        // ===== FILE UPLOAD COMPONENT =====
+        // ===== EDIT TASK MODAL =====
+        function EditTaskModal({ task, onClose, onSuccess }) {
+            const [title, setTitle] = React.useState(task.title);
+            const [description, setDescription] = React.useState(task.description || '');
+            const [dueDate, setDueDate] = React.useState(task.due_date || '');
+            const [priority, setPriority] = React.useState(task.priority);
+            const [status, setStatus] = React.useState(task.status);
+            const [loading, setLoading] = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+
+                try {
+                    const { error } = await supabase
+                        .from('tasks')
+                        .update({
+                            title,
+                            description,
+                            due_date: dueDate || null,
+                            priority,
+                            status
+                        })
+                        .eq('id', task.id);
+
+                    if (error) throw error;
+                    onSuccess();
+                } catch (err) {
+                    console.error('Error updating task:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="modal">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Edit Task</h2>
+                            <button className="close-btn" onClick={onClose}>✕</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Task Title *</label>
+                                <input
+                                    type="text"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    rows="3"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontFamily: 'inherit'
+                                    }}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Priority</label>
+                                <select 
+                                    value={priority}
+                                    onChange={(e) => setPriority(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Due Date</label>
+                                <input
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(e) => setDueDate(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Status</label>
+                                <select 
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+
+                            <div className="modal-actions">
+                                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Updating...' : 'Update Task'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // ===== FILE UPLOAD =====
         function FileUpload({ projectId, onUploadSuccess }) {
             const [loading, setLoading] = React.useState(false);
 
@@ -1065,6 +1418,7 @@
                     });
 
                     onUploadSuccess();
+                    e.target.value = '';
                 } catch (err) {
                     console.error('Error uploading file:', err);
                     alert('Error uploading file: ' + err.message);
@@ -1089,7 +1443,7 @@
             );
         }
 
-        // Render the app
+        // Render app
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>

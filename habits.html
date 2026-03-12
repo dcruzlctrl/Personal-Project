@@ -62,7 +62,7 @@
             font-size: 14px;
         }
 
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #e5e7eb;
@@ -71,7 +71,7 @@
             transition: all 0.2s;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -180,6 +180,27 @@
             font-size: 24px;
             color: #0f172a;
             font-weight: 600;
+        }
+
+        .time-display {
+            background: #dbeafe;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #1e40af;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .time-debug {
+            background: #fef3c7;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #92400e;
+            margin-bottom: 12px;
+            text-align: center;
         }
 
         .btn-sm {
@@ -483,10 +504,19 @@
             transform: translateX(16px);
         }
 
-        .timezone-info {
-            font-size: 11px;
-            color: #9ca3af;
-            margin-top: 4px;
+        .info-box {
+            padding: 12px;
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #166534;
+            margin-bottom: 12px;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 4px;
         }
     </style>
 </head>
@@ -501,35 +531,68 @@
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ===== TIMEZONE UTILITIES (EST) =====
-        function getESTDate() {
-            const estTime = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
-            const estDate = new Date(estTime);
-            return estDate.toISOString().split('T')[0];
+        // ===== TIMEZONE UTILITIES (NYC/EST/EDT) =====
+        // Returns date in YYYY-MM-DD format for today in NYC timezone
+        function getNYCDate() {
+            const now = new Date();
+            
+            // Get UTC time and offset for NYC (EST/EDT)
+            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+            
+            // NYC is UTC-5 (EST) or UTC-4 (EDT)
+            // For now, use -5 (EST is the current winter time)
+            const nycTime = new Date(utcTime + (-5 * 3600000));
+            
+            const year = nycTime.getUTCFullYear();
+            const month = String(nycTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(nycTime.getUTCDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
         }
 
-        function getESTDateTime() {
-            return new Date().toLocaleString('en-US', { 
-                timeZone: 'America/New_York',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
+        // Returns formatted time string in NYC timezone
+        function getNYCTimeString() {
+            const now = new Date();
+            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const nycTime = new Date(utcTime + (-5 * 3600000));
+            
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            const dayName = days[nycTime.getUTCDay()];
+            const monthName = months[nycTime.getUTCMonth()];
+            const date = nycTime.getUTCDate();
+            const hours = String(nycTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(nycTime.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(nycTime.getUTCSeconds()).padStart(2, '0');
+            
+            const ampm = nycTime.getUTCHours() >= 12 ? 'PM' : 'AM';
+            const hours12 = nycTime.getUTCHours() % 12 || 12;
+            
+            return `${dayName} ${monthName} ${date} ${String(hours12).padStart(2, '0')}:${minutes}:${seconds} ${ampm} EST`;
         }
 
         // ===== MAIN APP =====
         function App() {
             const [user, setUser] = React.useState(null);
             const [loading, setLoading] = React.useState(true);
+            const [currentTime, setCurrentTime] = React.useState(getNYCTimeString());
 
             React.useEffect(() => {
                 checkUser();
                 const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
                     setUser(session?.user || null);
                 });
-                return () => authListener?.subscription?.unsubscribe();
+
+                // Update time display every second
+                const timeInterval = setInterval(() => {
+                    setCurrentTime(getNYCTimeString());
+                }, 1000);
+
+                return () => {
+                    authListener?.subscription?.unsubscribe();
+                    clearInterval(timeInterval);
+                };
             }, []);
 
             const checkUser = async () => {
@@ -555,6 +618,9 @@
                     </nav>
 
                     <div className="content">
+                        <div className="time-display">
+                            🕐 NYC Time: {currentTime}
+                        </div>
                         <HabitsView user={user} />
                     </div>
                 </div>
@@ -673,14 +739,17 @@
                     const habitsWithReset = await Promise.all(
                         (data || []).map(async (habit) => {
                             if (habit.reset_daily) {
-                                const estToday = getESTDate();
-                                if (habit.last_reset_date !== estToday) {
-                                    // Reset needed - reset count but keep logs
+                                const nycToday = getNYCDate();
+                                const lastReset = habit.last_reset_date || nycToday;
+                                
+                                // If last_reset_date is different from today, reset needed
+                                if (lastReset !== nycToday) {
+                                    console.log(`Resetting ${habit.name}: last reset was ${lastReset}, today is ${nycToday}`);
                                     await supabase
                                         .from('habits')
-                                        .update({ last_reset_date: estToday, count: 0 })
+                                        .update({ last_reset_date: nycToday, count: 0 })
                                         .eq('id', habit.id);
-                                    return { ...habit, last_reset_date: estToday, count: 0 };
+                                    return { ...habit, last_reset_date: nycToday, count: 0 };
                                 }
                             }
                             return habit;
@@ -705,7 +774,7 @@
                         name: newHabitName,
                         count: 0,
                         reset_daily: false,
-                        last_reset_date: getESTDate()
+                        last_reset_date: getNYCDate()
                     });
 
                     if (error) throw error;
@@ -772,11 +841,12 @@
 
             const toggleDailyReset = async (habit) => {
                 try {
+                    const nycToday = getNYCDate();
                     await supabase
                         .from('habits')
                         .update({ 
                             reset_daily: !habit.reset_daily,
-                            last_reset_date: getESTDate()
+                            last_reset_date: nycToday
                         })
                         .eq('id', habit.id);
                     loadHabits();
@@ -911,13 +981,18 @@
                                 {habit.name}
                             </h3>
 
+                            <div className="info-box">
+                                <strong>ℹ️ About Daily Reset</strong>
+                                Enable this for habits you want to track daily (like exercise, drinking water, or meditation). Your counter will reset to 0 at 12:00 AM NYC time, but all-time totals are preserved in your history.
+                            </div>
+
                             <div className="toggle-switch">
                                 <div style={{ flex: 1 }}>
                                     <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>
                                         Daily Reset
                                     </label>
                                     <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                                        Counter resets at 12 AM EST each day. Total count is preserved in history.
+                                        Counter resets to 0 at 12 AM NYC time. Total count preserved in history.
                                     </div>
                                 </div>
                                 <input
@@ -937,9 +1012,12 @@
                                     color: '#1e40af',
                                     marginBottom: '12px'
                                 }}>
-                                    ✓ This habit will reset at 12 AM EST (Eastern Standard Time)
+                                    ✓ Daily reset ENABLED
                                     <div style={{ marginTop: '4px' }}>
-                                        Last reset: {new Date(habit.last_reset_date).toLocaleDateString()}
+                                        Last reset: {habit.last_reset_date || 'Today'}
+                                    </div>
+                                    <div style={{ marginTop: '4px', fontSize: '11px' }}>
+                                        Resets at 12:00 AM Eastern Time
                                     </div>
                                 </div>
                             )}
@@ -1010,7 +1088,7 @@
                         ) : (
                             <>
                                 <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#0f172a' }}>
-                                    History (All Timestamps in EST)
+                                    History (NYC Time)
                                 </h3>
                                 {logs.length === 0 ? (
                                     <div style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>
@@ -1019,19 +1097,28 @@
                                 ) : (
                                     <div className="history-list">
                                         {logs.map((log, idx) => {
-                                            const estTime = new Date(log.timestamp).toLocaleString('en-US', {
-                                                timeZone: 'America/New_York',
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                second: '2-digit'
-                                            });
+                                            const timestamp = new Date(log.timestamp);
+                                            const utcTime = timestamp.getTime();
+                                            const nycTime = new Date(utcTime - (5 * 3600000)); // UTC-5 for EST
+                                            
+                                            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                            
+                                            const dayName = days[nycTime.getUTCDay()];
+                                            const monthName = months[nycTime.getUTCMonth()];
+                                            const date = nycTime.getUTCDate();
+                                            const hours = nycTime.getUTCHours();
+                                            const minutes = String(nycTime.getUTCMinutes()).padStart(2, '0');
+                                            const seconds = String(nycTime.getUTCSeconds()).padStart(2, '0');
+                                            const ampm = hours >= 12 ? 'PM' : 'AM';
+                                            const hours12 = hours % 12 || 12;
+                                            
+                                            const timeStr = `${dayName} ${monthName} ${date} ${String(hours12).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
                                             const isPositive = log.change > 0;
                                             
                                             return (
                                                 <div key={idx} className="history-item">
-                                                    <div className="history-time">{estTime} EST</div>
+                                                    <div className="history-time">{timeStr}</div>
                                                     <div className={isPositive ? 'history-change-positive' : 'history-change-negative'}>
                                                         {isPositive ? '+' : ''}{log.change}
                                                     </div>

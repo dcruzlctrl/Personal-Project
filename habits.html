@@ -77,25 +77,6 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            margin: 0;
-            cursor: pointer;
-            font-weight: 400;
-        }
-
         .btn {
             width: 100%;
             padding: 12px;
@@ -241,10 +222,11 @@
             font-weight: 600;
         }
 
-        .habit-count {
+        .habit-counts {
             font-size: 14px;
             color: #667eea;
             font-weight: 600;
+            margin: 8px 0;
         }
 
         .habit-date {
@@ -253,7 +235,7 @@
             margin-top: 4px;
         }
 
-        .habit-reset-badge {
+        .reset-badge {
             display: inline-block;
             background: #dbeafe;
             color: #1e40af;
@@ -316,6 +298,21 @@
 
         .btn-delete:hover {
             background: #4b5563;
+        }
+
+        .btn-settings {
+            background: #f59e0b;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        .btn-settings:hover {
+            background: #d97706;
         }
 
         .empty-state {
@@ -440,35 +437,55 @@
             width: 100%;
         }
 
-        .stats-container {
-            background: #f0f9ff;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            border-left: 4px solid #667eea;
+        .settings-modal {
+            margin-bottom: 24px;
         }
 
-        .stats-row {
+        .toggle-switch {
             display: flex;
-            justify-content: space-around;
-            text-align: center;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            margin-bottom: 12px;
         }
 
-        .stat {
-            flex: 1;
+        .toggle-checkbox {
+            width: 40px;
+            height: 24px;
+            appearance: none;
+            background: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s;
+            flex-shrink: 0;
         }
 
-        .stat-label {
-            font-size: 12px;
-            color: #6b7280;
-            text-transform: uppercase;
-            font-weight: 600;
+        .toggle-checkbox:checked {
+            background: #667eea;
         }
 
-        .stat-value {
-            font-size: 24px;
-            color: #667eea;
-            font-weight: 600;
+        .toggle-checkbox::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+
+        .toggle-checkbox:checked::after {
+            transform: translateX(16px);
+        }
+
+        .timezone-info {
+            font-size: 11px;
+            color: #9ca3af;
             margin-top: 4px;
         }
     </style>
@@ -484,28 +501,21 @@
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ===== TIMEZONE UTILITIES =====
-        // Convert to Eastern Standard Time
-        function getESTTime(date = new Date()) {
-            return new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-        }
-
-        function getESTDateString(date = new Date()) {
-            const estDate = getESTTime(date);
+        // ===== TIMEZONE UTILITIES (EST) =====
+        function getESTDate() {
+            const estTime = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+            const estDate = new Date(estTime);
             return estDate.toISOString().split('T')[0];
         }
 
-        function formatESTDateTime(date) {
-            const estDate = getESTTime(date);
-            return estDate.toLocaleString('en-US', {
+        function getESTDateTime() {
+            return new Date().toLocaleString('en-US', { 
                 timeZone: 'America/New_York',
                 month: 'short',
                 day: 'numeric',
-                year: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit',
-                hour12: true
+                second: '2-digit'
             });
         }
 
@@ -638,12 +648,15 @@
             const [habits, setHabits] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
             const [newHabitName, setNewHabitName] = React.useState('');
-            const [resetDaily, setResetDaily] = React.useState(false);
             const [selectedHabit, setSelectedHabit] = React.useState(null);
             const [showHistory, setShowHistory] = React.useState(false);
+            const [showSettings, setShowSettings] = React.useState(false);
 
             React.useEffect(() => {
                 loadHabits();
+                // Check for daily resets every minute
+                const interval = setInterval(loadHabits, 60000);
+                return () => clearInterval(interval);
             }, []);
 
             const loadHabits = async () => {
@@ -656,9 +669,25 @@
 
                     if (error) throw error;
                     
-                    // Check if any habits need daily reset
-                    const updatedHabits = await Promise.all(data.map(habit => checkAndResetHabit(habit)));
-                    setHabits(updatedHabits);
+                    // Check if daily reset is needed for habits with reset_daily enabled
+                    const habitsWithReset = await Promise.all(
+                        (data || []).map(async (habit) => {
+                            if (habit.reset_daily) {
+                                const estToday = getESTDate();
+                                if (habit.last_reset_date !== estToday) {
+                                    // Reset needed - reset count but keep logs
+                                    await supabase
+                                        .from('habits')
+                                        .update({ last_reset_date: estToday, count: 0 })
+                                        .eq('id', habit.id);
+                                    return { ...habit, last_reset_date: estToday, count: 0 };
+                                }
+                            }
+                            return habit;
+                        })
+                    );
+                    
+                    setHabits(habitsWithReset);
                 } catch (err) {
                     console.error('Error loading habits:', err);
                 } finally {
@@ -666,49 +695,21 @@
                 }
             };
 
-            const checkAndResetHabit = async (habit) => {
-                // If reset_daily is enabled and last_reset_date is not today
-                if (habit.reset_daily) {
-                    const today = getESTDateString();
-                    const lastReset = habit.last_reset_date;
-
-                    if (lastReset !== today) {
-                        // Reset the count to 0
-                        const { data, error } = await supabase
-                            .from('habits')
-                            .update({
-                                count: 0,
-                                last_reset_date: today
-                            })
-                            .eq('id', habit.id)
-                            .select()
-                            .single();
-
-                        if (error) console.error('Error resetting habit:', error);
-                        return data || habit;
-                    }
-                }
-                return habit;
-            };
-
             const handleAddHabit = async (e) => {
                 e.preventDefault();
                 if (!newHabitName.trim()) return;
 
                 try {
-                    const today = getESTDateString();
                     const { error } = await supabase.from('habits').insert({
                         user_id: user.id,
                         name: newHabitName,
                         count: 0,
-                        lifetime_count: 0,
-                        reset_daily: resetDaily,
-                        last_reset_date: today
+                        reset_daily: false,
+                        last_reset_date: getESTDate()
                     });
 
                     if (error) throw error;
                     setNewHabitName('');
-                    setResetDaily(false);
                     loadHabits();
                 } catch (err) {
                     console.error('Error adding habit:', err);
@@ -718,22 +719,16 @@
             const handleIncrement = async (habitId) => {
                 try {
                     const habit = habits.find(h => h.id === habitId);
-                    const newCount = habit.count + 1;
-                    const newLifetimeCount = habit.lifetime_count + 1;
                     
                     await supabase
                         .from('habits')
-                        .update({ 
-                            count: newCount,
-                            lifetime_count: newLifetimeCount
-                        })
+                        .update({ count: habit.count + 1 })
                         .eq('id', habitId);
 
-                    const timestamp = getESTTime().toISOString();
                     await supabase.from('habit_logs').insert({
                         habit_id: habitId,
                         change: 1,
-                        timestamp: timestamp
+                        timestamp: new Date().toISOString()
                     });
 
                     loadHabits();
@@ -746,22 +741,15 @@
                 try {
                     const habit = habits.find(h => h.id === habitId);
                     if (habit.count > 0) {
-                        const newCount = habit.count - 1;
-                        const newLifetimeCount = Math.max(0, habit.lifetime_count - 1);
-                        
                         await supabase
                             .from('habits')
-                            .update({ 
-                                count: newCount,
-                                lifetime_count: newLifetimeCount
-                            })
+                            .update({ count: habit.count - 1 })
                             .eq('id', habitId);
 
-                        const timestamp = getESTTime().toISOString();
                         await supabase.from('habit_logs').insert({
                             habit_id: habitId,
                             change: -1,
-                            timestamp: timestamp
+                            timestamp: new Date().toISOString()
                         });
 
                         loadHabits();
@@ -782,6 +770,21 @@
                 }
             };
 
+            const toggleDailyReset = async (habit) => {
+                try {
+                    await supabase
+                        .from('habits')
+                        .update({ 
+                            reset_daily: !habit.reset_daily,
+                            last_reset_date: getESTDate()
+                        })
+                        .eq('id', habit.id);
+                    loadHabits();
+                } catch (err) {
+                    console.error('Error updating habit:', err);
+                }
+            };
+
             if (loading) return <div className="loading">Loading habits...</div>;
 
             return (
@@ -799,17 +802,6 @@
                                 placeholder="Add a new habit (e.g., 'Brush teeth', 'Exercise', 'Read')"
                                 required
                             />
-                            <div className="checkbox-group">
-                                <input
-                                    type="checkbox"
-                                    id="resetDaily"
-                                    checked={resetDaily}
-                                    onChange={(e) => setResetDaily(e.target.checked)}
-                                />
-                                <label htmlFor="resetDaily">
-                                    Reset counter daily at midnight (EST)
-                                </label>
-                            </div>
                             <button type="submit" className="btn btn-primary">
                                 + Add Habit
                             </button>
@@ -831,15 +823,29 @@
                                             setShowHistory(true);
                                         }}>
                                             <h3>{habit.name}</h3>
-                                            <div className="habit-count">Today's Count: {habit.count}</div>
+                                            <div className="habit-counts">
+                                                Today: {habit.count} 
+                                                {habit.reset_daily ? ' | Total: View details' : ''}
+                                            </div>
                                             {habit.reset_daily && (
-                                                <div className="habit-reset-badge">🔄 Resets daily at midnight (EST)</div>
+                                                <div className="reset-badge">
+                                                    ↻ Resets daily at 12 AM EST
+                                                </div>
                                             )}
                                             <div className="habit-date">
-                                                Created: {formatESTDateTime(new Date(habit.created_at))}
+                                                Created: {new Date(habit.created_at).toLocaleDateString()}
                                             </div>
                                         </div>
                                         <div className="habit-controls">
+                                            <button 
+                                                className="btn-settings"
+                                                onClick={() => {
+                                                    setSelectedHabit(habit);
+                                                    setShowSettings(true);
+                                                }}
+                                            >
+                                                ⚙️
+                                            </button>
                                             <button 
                                                 className="counter-btn counter-btn-decrement"
                                                 onClick={() => handleDecrement(habit.id)}
@@ -874,7 +880,78 @@
                             }}
                         />
                     )}
+
+                    {showSettings && selectedHabit && (
+                        <HabitSettingsModal
+                            habit={selectedHabit}
+                            onToggleDailyReset={() => toggleDailyReset(selectedHabit)}
+                            onClose={() => {
+                                setShowSettings(false);
+                                setSelectedHabit(null);
+                                loadHabits();
+                            }}
+                        />
+                    )}
                 </>
+            );
+        }
+
+        // ===== HABIT SETTINGS MODAL =====
+        function HabitSettingsModal({ habit, onToggleDailyReset, onClose }) {
+            return (
+                <div className="modal">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Habit Settings</h2>
+                            <button className="close-btn" onClick={onClose}>✕</button>
+                        </div>
+
+                        <div className="settings-modal">
+                            <h3 style={{ marginBottom: '16px', fontSize: '16px', color: '#0f172a' }}>
+                                {habit.name}
+                            </h3>
+
+                            <div className="toggle-switch">
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>
+                                        Daily Reset
+                                    </label>
+                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                        Counter resets at 12 AM EST each day. Total count is preserved in history.
+                                    </div>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    className="toggle-checkbox"
+                                    checked={habit.reset_daily}
+                                    onChange={onToggleDailyReset}
+                                />
+                            </div>
+
+                            {habit.reset_daily && (
+                                <div style={{
+                                    padding: '12px',
+                                    background: '#dbeafe',
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    color: '#1e40af',
+                                    marginBottom: '12px'
+                                }}>
+                                    ✓ This habit will reset at 12 AM EST (Eastern Standard Time)
+                                    <div style={{ marginTop: '4px' }}>
+                                        Last reset: {new Date(habit.last_reset_date).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="modal-actions">
+                            <button className="btn btn-primary" onClick={onClose}>
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
             );
         }
 
@@ -882,6 +959,7 @@
         function HabitDetailModal({ habit, onClose }) {
             const [logs, setLogs] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
+            const [totalCount, setTotalCount] = React.useState(0);
 
             React.useEffect(() => {
                 loadLogs();
@@ -896,7 +974,12 @@
                         .order('timestamp', { ascending: false });
 
                     if (error) throw error;
+                    
                     setLogs(data || []);
+                    
+                    // Calculate total count from all logs
+                    const total = (data || []).reduce((sum, log) => sum + log.change, 0);
+                    setTotalCount(total);
                 } catch (err) {
                     console.error('Error loading logs:', err);
                 } finally {
@@ -910,18 +993,12 @@
                         <div className="modal-header">
                             <div>
                                 <h2>{habit.name}</h2>
-                                <div style={{ marginTop: '16px' }}>
-                                    <div className="stats-container">
-                                        <div className="stats-row">
-                                            <div className="stat">
-                                                <div className="stat-label">Today's Count</div>
-                                                <div className="stat-value">{habit.count}</div>
-                                            </div>
-                                            <div className="stat">
-                                                <div className="stat-label">All-Time Count</div>
-                                                <div className="stat-value">{habit.lifetime_count}</div>
-                                            </div>
-                                        </div>
+                                <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                    <div style={{ color: '#667eea', fontWeight: '600', marginBottom: '4px' }}>
+                                        Today's Count: {habit.count}
+                                    </div>
+                                    <div style={{ color: '#10b981', fontWeight: '600' }}>
+                                        Total All-Time: {totalCount}
                                     </div>
                                 </div>
                             </div>
@@ -933,7 +1010,7 @@
                         ) : (
                             <>
                                 <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#0f172a' }}>
-                                    History (All-Time Tracking)
+                                    History (All Timestamps in EST)
                                 </h3>
                                 {logs.length === 0 ? (
                                     <div style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>
@@ -942,12 +1019,19 @@
                                 ) : (
                                     <div className="history-list">
                                         {logs.map((log, idx) => {
-                                            const timestamp = formatESTDateTime(new Date(log.timestamp));
+                                            const estTime = new Date(log.timestamp).toLocaleString('en-US', {
+                                                timeZone: 'America/New_York',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                second: '2-digit'
+                                            });
                                             const isPositive = log.change > 0;
                                             
                                             return (
                                                 <div key={idx} className="history-item">
-                                                    <div className="history-time">{timestamp} EST</div>
+                                                    <div className="history-time">{estTime} EST</div>
                                                     <div className={isPositive ? 'history-change-positive' : 'history-change-negative'}>
                                                         {isPositive ? '+' : ''}{log.change}
                                                     </div>

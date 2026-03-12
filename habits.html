@@ -547,23 +547,15 @@
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ===== TIMEZONE UTILITIES (NYC/EDT) =====
-        // Get offset based on DST
-        function getNYCOffset() {
-            const now = new Date();
-            // Check if DST is in effect (second Sunday of March to first Sunday of November)
-            const jan = new Date(now.getFullYear(), 0, 1);
-            const jul = new Date(now.getFullYear(), 6, 1);
-            const stdTimezoneOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-            const isDST = now.getTimezoneOffset() < stdTimezoneOffset;
-            
-            // EDT (UTC-4) during DST, EST (UTC-5) otherwise
-            return isDST ? -4 : -5;
+        // ===== TIMEZONE UTILITIES (NYC) =====
+        // EDT (Eastern Daylight Time) = UTC-4
+        function getTimezoneOffset() {
+            return -4; // EDT
         }
 
         function getNYCDate() {
             const now = new Date();
-            const offset = getNYCOffset();
+            const offset = getTimezoneOffset();
             const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
             const nycTime = new Date(utcTime + (offset * 3600000));
             
@@ -576,7 +568,7 @@
 
         function getNYCTimeString() {
             const now = new Date();
-            const offset = getNYCOffset();
+            const offset = getTimezoneOffset();
             const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
             const nycTime = new Date(utcTime + (offset * 3600000));
             
@@ -1008,8 +1000,8 @@
                                     <div className="history-list">
                                         {logs.map((log, idx) => {
                                             const timestamp = new Date(log.timestamp);
-                                            const offset = getNYCOffset();
-                                            const utcTime = timestamp.getTime();
+                                            const offset = getTimezoneOffset();
+                                            const utcTime = timestamp.getTime() + (timestamp.getTimezoneOffset() * 60000);
                                             const nycTime = new Date(utcTime + (offset * 3600000));
                                             
                                             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

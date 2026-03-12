@@ -446,6 +446,40 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // ===== TIMEZONE UTILITIES (EST) =====
+        function getESTTime(date = new Date()) {
+            return new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+        }
+
+        function getESTDateString(date = new Date()) {
+            const estDate = getESTTime(date);
+            return estDate.toISOString().split('T')[0];
+        }
+
+        function formatESTDateTime(date) {
+            const estDate = getESTTime(date);
+            return estDate.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+        }
+
+        function formatESTDate(date) {
+            const estDate = getESTTime(date);
+            return estDate.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
         // ===== CONFIGURATION =====
         const SUPABASE_URL = "https://wthjcbkfpjgjsqyqcghx.supabase.co";
         const SUPABASE_KEY = "sb_publishable_Que8SpJa0CzVEQbgC8Mv5A_mjJfTu_B";
@@ -714,7 +748,7 @@
                             <h4>Tasks ({taskCount})</h4>
                             {project.end_date && (
                                 <div className="date-display">
-                                    Due: {new Date(project.end_date).toLocaleDateString()}
+                                    Due: {formatESTDate(new Date(project.end_date))}
                                 </div>
                             )}
                         </div>
@@ -1099,7 +1133,7 @@
                                     </p>
                                 )}
                                 <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#9ca3af', flexWrap: 'wrap' }}>
-                                    {task.due_date && <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>}
+                                    {task.due_date && <span>Due: {formatESTDate(new Date(task.due_date))}</span>}
                                     <span className={`badge badge-${task.priority}`}>
                                         {task.priority}
                                     </span>

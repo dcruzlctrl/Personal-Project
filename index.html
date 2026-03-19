@@ -226,6 +226,55 @@
             background: #d97706;
         }
 
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .stat-card.projects .stat-number {
+            color: #3b82f6;
+        }
+
+        .stat-card.pending .stat-number {
+            color: #f59e0b;
+        }
+
+        .stat-card.in-progress .stat-number {
+            color: #3b82f6;
+        }
+
+        .stat-card.completed .stat-number {
+            color: #10b981;
+        }
+
+        .stat-card.upcoming .stat-number {
+            color: #ef4444;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -523,7 +572,7 @@
                                 <a onClick={() => setView('projects')}>← Projects</a>
                             )}
                             <a href="habits.html" target="_blank" rel="noopener noreferrer">🎯 Habits</a>
-                            <a href="crossword.html" target="_blank" rel="noopener noreferrer">🔤 Crossword</a>
+                            <a href="crossword.html" target="_blank" rel="noopener noreferrer">🧩 Crossword</a>
                             <button onClick={() => handleLogout()}>Logout</button>
                         </div>
                     </nav>
@@ -635,6 +684,14 @@
             const [projects, setProjects] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
             const [showNewProjectModal, setShowNewProjectModal] = React.useState(false);
+            const [stats, setStats] = React.useState({
+                activeProjects: 0,
+                totalTasks: 0,
+                pendingTasks: 0,
+                inProgressTasks: 0,
+                completedTasks: 0,
+                upcomingTasks: 0
+            });
 
             React.useEffect(() => {
                 loadProjects();
@@ -650,6 +707,48 @@
 
                     if (error) throw error;
                     setProjects(data || []);
+                    
+                    // Fetch tasks for all projects to calculate stats
+                    const projectIds = (data || []).map(p => p.id);
+                    if (projectIds.length > 0) {
+                        const { data: tasksData, error: tasksError } = await supabase
+                            .from('tasks')
+                            .select('status, due_date')
+                            .in('project_id', projectIds);
+                        
+                        if (!tasksError && tasksData) {
+                            const pending = tasksData.filter(t => t.status === 'pending').length;
+                            const inProgress = tasksData.filter(t => t.status === 'in-progress').length;
+                            const completed = tasksData.filter(t => t.status === 'completed').length;
+                            
+                            // Calculate tasks due in next 7 days
+                            const today = new Date();
+                            const sevenDaysFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+                            const upcoming = tasksData.filter(t => {
+                                if (!t.due_date || t.status === 'completed') return false;
+                                const dueDate = new Date(t.due_date);
+                                return dueDate >= today && dueDate <= sevenDaysFromNow;
+                            }).length;
+                            
+                            setStats({
+                                activeProjects: data.filter(p => p.status === 'active').length,
+                                totalTasks: tasksData.length,
+                                pendingTasks: pending,
+                                inProgressTasks: inProgress,
+                                completedTasks: completed,
+                                upcomingTasks: upcoming
+                            });
+                        }
+                    } else {
+                        setStats({
+                            activeProjects: 0,
+                            totalTasks: 0,
+                            pendingTasks: 0,
+                            inProgressTasks: 0,
+                            completedTasks: 0,
+                            upcomingTasks: 0
+                        });
+                    }
                 } catch (err) {
                     console.error('Error loading projects:', err);
                 } finally {
@@ -666,6 +765,34 @@
                         <button className="btn-sm btn-sm-primary" onClick={() => setShowNewProjectModal(true)}>
                             + New Project
                         </button>
+                    </div>
+
+                    {/* Stats Section */}
+                    <div className="stats-section">
+                        <div className="stat-card projects">
+                            <div className="stat-number">{stats.activeProjects}</div>
+                            <div className="stat-label">Active Projects</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{stats.totalTasks}</div>
+                            <div className="stat-label">Total Tasks</div>
+                        </div>
+                        <div className="stat-card pending">
+                            <div className="stat-number">{stats.pendingTasks}</div>
+                            <div className="stat-label">Pending</div>
+                        </div>
+                        <div className="stat-card in-progress">
+                            <div className="stat-number">{stats.inProgressTasks}</div>
+                            <div className="stat-label">In Progress</div>
+                        </div>
+                        <div className="stat-card completed">
+                            <div className="stat-number">{stats.completedTasks}</div>
+                            <div className="stat-label">Completed</div>
+                        </div>
+                        <div className="stat-card upcoming">
+                            <div className="stat-number">{stats.upcomingTasks}</div>
+                            <div className="stat-label">Due in 7 Days</div>
+                        </div>
                     </div>
 
                     {projects.length === 0 ? (

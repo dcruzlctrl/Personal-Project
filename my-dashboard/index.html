@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Projects & Habits Tracker</title>
+    
+    <!-- External Libraries -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/utilities.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Main App Entry Point with Module Support -->
+    <script type="text/babel">
+        // Dynamic imports for all components
+        const renderApp = async () => {
+            const { default: App } = await import('./components/App.js');
+            
+            // Render React app
+            ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        };
+
+        // Start the app
+        renderApp().catch(err => {
+            console.error('Failed to load app:', err);
+            document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Failed to load application. Check console for details.</div>';
+        });
+    </script>
+</body>
+</html>

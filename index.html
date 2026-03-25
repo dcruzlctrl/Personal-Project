@@ -3,108 +3,1384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Projects & Habits Tracker</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/utilities.css">
-    
-    <style>
-        .loading-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: white;
-        }
-        .loading-screen h1 {
-            font-size: 24px;
-        }
-    </style>
-</head>
-<body>
-    <div id="root">
-        <div class="loading-screen">
-            <div>
-                <h1>📊 Loading Dashboard...</h1>
-                <p>This is a demo page. The full app requires proper backend setup.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- React -->
+    <title>Project Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --font: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --text-subtle: #94a3b8;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --danger-light: #fef2f2;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --radius-xs: 4px;
+            --radius-sm: 6px;
+            --radius: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+            --shadow-xl: 0 20px 40px -5px rgba(0,0,0,0.12), 0 8px 16px -6px rgba(0,0,0,0.06);
+        }
 
-    <!-- Demo App -->
-    <script>
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        
-        const DemoApp = () => {
-            const [view, setView] = React.useState('projects');
-            
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body, #root { height: 100%; width: 100%; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== AUTH ===== */
+        .auth-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #060e1f;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-wrap::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(37,99,235,.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37,99,235,.07) 1px, transparent 1px);
+            background-size: 44px 44px;
+        }
+        .auth-wrap::after {
+            content: '';
+            position: absolute;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(37,99,235,.14) 0%, transparent 68%);
+            top: -220px; right: -140px;
+            pointer-events: none;
+        }
+        .auth-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: 44px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            z-index: 1;
+        }
+        .auth-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+        .auth-brand-icon {
+            width: 36px; height: 36px;
+            background: var(--accent);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px;
+        }
+        .auth-brand-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .auth-card h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 5px;
+        }
+        .auth-sub {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+
+        /* ===== FORMS ===== */
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font);
+            color: var(--text);
+            background: var(--surface);
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: var(--text-subtle); }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        }
+        .form-group textarea { resize: vertical; min-height: 76px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 11px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-family: var(--font);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            letter-spacing: .1px;
+        }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+        .btn-ghost {
+            background: var(--bg);
+            color: var(--text);
+            border: 1.5px solid var(--border);
+            margin-top: 10px;
+        }
+        .btn-ghost:hover:not(:disabled) { background: #e9eef6; }
+
+        .btn-sm {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: var(--font);
+            transition: all .15s;
+            white-space: nowrap;
+        }
+        .btn-sm-primary { background: var(--accent); color: white; }
+        .btn-sm-primary:hover { background: var(--accent-hover); }
+        .btn-sm-warning { background: #fef9c3; color: #854d0e; }
+        .btn-sm-warning:hover { background: var(--warning); color: white; }
+        .btn-sm-danger { background: var(--danger-light); color: var(--danger); }
+        .btn-sm-danger:hover { background: var(--danger); color: white; }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: var(--font);
+            transition: all .15s;
+        }
+        .btn-action-primary { background: var(--accent); color: white; }
+        .btn-action-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 12px rgba(37,99,235,.28); }
+
+        /* ===== FEEDBACK ===== */
+        .msg {
+            font-size: 13px;
+            padding: 10px 13px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+        .msg-error { background: var(--danger-light); color: #991b1b; border: 1px solid #fca5a5; }
+        .msg-success { background: var(--success-light); color: #065f46; border: 1px solid #6ee7b7; }
+
+        /* ===== LAYOUT ===== */
+        .dashboard { background: var(--bg); min-height: 100vh; }
+
+        .navbar {
+            background: rgba(255,255,255,.94);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+        }
+        .nav-brand-icon {
+            width: 28px; height: 28px;
+            background: var(--accent);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+        }
+        .nav-brand-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .nav-right {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 7px 11px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: none;
+            font-family: var(--font);
+            transition: all .15s;
+        }
+        .nav-link:hover { color: var(--text); background: var(--border-light); }
+        .nav-link-danger {
+            color: var(--danger);
+            background: none;
+            border: none;
+            padding: 7px 11px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .15s;
+        }
+        .nav-link-danger:hover { background: var(--danger-light); }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.4px;
+        }
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 15px 16px;
+            border: 1px solid var(--border);
+            border-top: 3px solid var(--border);
+            box-shadow: var(--shadow-xs);
+        }
+        .stat-card.c-blue   { border-top-color: var(--accent); }
+        .stat-card.c-amber  { border-top-color: var(--warning); }
+        .stat-card.c-sky    { border-top-color: #0ea5e9; }
+        .stat-card.c-green  { border-top-color: var(--success); }
+        .stat-card.c-red    { border-top-color: var(--danger); }
+        .stat-num {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--text);
+            letter-spacing: -1px;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        /* ===== PROJECT CARDS ===== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 14px;
+        }
+        .project-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-xs);
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .project-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+            border-color: #cbd5e1;
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.2px;
+            margin-bottom: 5px;
+        }
+        .card-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .card-meta-text { font-size: 12px; color: var(--text-subtle); }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+        .badge::before {
+            content: '';
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+        .badge-active      { background: var(--success-light); color: #065f46; }
+        .badge-pending     { background: var(--warning-light); color: #92400e; }
+        .badge-completed   { background: #f0fdf4; color: #166534; }
+        .badge-in-progress { background: var(--accent-light); color: #1e40af; }
+        .badge-low         { background: #f0fdf4; color: #166534; }
+        .badge-medium      { background: var(--warning-light); color: #92400e; }
+        .badge-high        { background: var(--danger-light); color: #991b1b; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,.55);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeOverlay .15s ease;
+        }
+        @keyframes fadeOverlay { from { opacity: 0; } to { opacity: 1; } }
+        .modal-box {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: modalSlide .2s ease;
+        }
+        @keyframes modalSlide {
+            from { opacity: 0; transform: translateY(10px) scale(.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .modal-close {
+            width: 28px; height: 28px;
+            background: var(--bg);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .15s;
+        }
+        .modal-close:hover { background: var(--border); color: var(--text); }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions .btn { margin: 0; }
+
+        /* ===== DETAIL VIEW ===== */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 0;
+            margin-bottom: 18px;
+            font-family: var(--font);
+            transition: color .15s;
+        }
+        .back-btn:hover { color: var(--text); }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-subtle);
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            margin-bottom: 10px;
+        }
+
+        /* ===== TASKS ===== */
+        .task-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            transition: all .15s;
+        }
+        .task-card:hover { border-color: #cbd5e1; }
+        .task-card.done { opacity: .5; }
+        .task-card.done .task-title { text-decoration: line-through; }
+        .task-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .task-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+        .task-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 7px;
+        }
+        .task-meta {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-subtle);
+        }
+        .task-controls {
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+            flex-shrink: 0;
+        }
+        .status-select {
+            padding: 5px 8px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: var(--font);
+            cursor: pointer;
+            color: var(--text);
+            background: var(--surface);
+        }
+        .status-select:focus { outline: none; border-color: var(--accent); }
+
+        /* ===== FILES ===== */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            text-align: center;
+            background: var(--bg);
+            margin-bottom: 10px;
+            transition: all .15s;
+        }
+        .upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
+        .upload-zone label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 6px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .file-item a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .file-item a:hover { text-decoration: underline; }
+
+        .divider { height: 1px; background: var(--border-light); margin: 22px 0; }
+
+        /* ===== STATES ===== */
+        .empty {
+            text-align: center;
+            padding: 48px 20px;
+        }
+        .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .35; }
+        .empty-title { font-size: 15px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+        .empty-desc  { font-size: 13px; color: var(--text-subtle); }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: var(--text-muted);
+            font-size: 14px;
+            gap: 10px;
+        }
+        .spinner {
+            width: 18px; height: 18px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .65s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ===== TIMEZONE UTILITIES (EST) =====
+        function getESTTime(date = new Date()) {
+            return new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+        }
+        function getESTDateString(date = new Date()) {
+            return getESTTime(date).toISOString().split('T')[0];
+        }
+        function formatESTDateTime(date) {
+            return getESTTime(date).toLocaleString('en-US', {
+                timeZone: 'America/New_York', month: 'short', day: 'numeric',
+                year: 'numeric', hour: '2-digit', minute: '2-digit',
+                second: '2-digit', hour12: true
+            });
+        }
+        function formatESTDate(date) {
+            return getESTTime(date).toLocaleString('en-US', {
+                timeZone: 'America/New_York', year: 'numeric', month: 'short', day: 'numeric'
+            });
+        }
+
+        // ===== CONFIGURATION =====
+        const SUPABASE_URL = "https://wthjcbkfpjgjsqyqcghx.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_Que8SpJa0CzVEQbgC8Mv5A_mjJfTu_B";
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ===== MAIN APP =====
+        function App() {
+            const [user, setUser]               = React.useState(null);
+            const [loading, setLoading]         = React.useState(true);
+            const [view, setView]               = React.useState('projects');
+            const [selectedProject, setSelectedProject] = React.useState(null);
+
+            React.useEffect(() => {
+                checkUser();
+                const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
+                    setUser(session?.user || null);
+                });
+                return () => authListener?.subscription?.unsubscribe();
+            }, []);
+
+            const checkUser = async () => {
+                const { data } = await supabase.auth.getSession();
+                setUser(data.session?.user || null);
+                setLoading(false);
+            };
+
+            if (loading) return <div className="loading"><div className="spinner"></div>Loading…</div>;
+            if (!user)   return <AuthPage onAuthSuccess={(u) => setUser(u)} />;
+
             return (
                 <div className="dashboard">
                     <nav className="navbar">
-                        <h1>📊 Dashboard</h1>
-                        <div className="navbar-links">
+                        <div className="nav-brand">
+                            <div className="nav-brand-icon">📊</div>
+                            <span className="nav-brand-text">Dashboard</span>
+                        </div>
+                        <div className="nav-right">
                             {view !== 'projects' && (
-                                <a onClick={() => setView('projects')} style={{ cursor: 'pointer' }}>
-                                    ← Projects
-                                </a>
+                                <button className="nav-link" onClick={() => setView('projects')}>← Projects</button>
                             )}
-                            <a onClick={() => setView('habits')} style={{ cursor: 'pointer' }}>
-                                🎯 Habits
-                            </a>
+                            <a href="habits.html" target="_blank" rel="noopener noreferrer" className="nav-link">🎯 Habits</a>
+                            <a href="crossword.html" target="_blank" rel="noopener noreferrer" className="nav-link">🧩 Crossword</a>
+                            <button className="nav-link-danger" onClick={handleLogout}>Sign out</button>
                         </div>
                     </nav>
-                    
                     <div className="content">
-                        <div className="time-display">
-                            🕐 {new Date().toLocaleString()}
-                        </div>
-                        
                         {view === 'projects' ? (
-                            <div>
-                                <h2>📁 Projects Module</h2>
-                                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.6' }}>
-                                    ✅ Application structure is correctly loaded!<br/><br/>
-                                    The Projects & Habits dashboard is ready with:
-                                </p>
-                                <ul style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.8', marginLeft: '20px' }}>
-                                    <li>✓ Complete project management system</li>
-                                    <li>✓ Task tracking and organization</li>
-                                    <li>✓ Professional dashboard with stats</li>
-                                    <li>✓ Full CRUD operations</li>
-                                    <li>✓ Database integration ready</li>
-                                </ul>
-                            </div>
+                            <ProjectsView user={user} onSelectProject={(p) => { setSelectedProject(p); setView('project-detail'); }} />
                         ) : (
-                            <div>
-                                <h2>🎯 Habits Module</h2>
-                                <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.6' }}>
-                                    ✅ Daily habit tracking system loaded!<br/><br/>
-                                    Features ready to use:
-                                </p>
-                                <ul style={{ fontSize: '14px', color: '#6b7280', lineHeight: '1.8', marginLeft: '20px' }}>
-                                    <li>✓ Daily habit counter (+/-)</li>
-                                    <li>✓ Streak calculation</li>
-                                    <li>✓ Progress tracking</li>
-                                    <li>✓ History with timestamps</li>
-                                    <li>✓ Persistent storage ready</li>
-                                </ul>
-                            </div>
+                            <ProjectDetailView project={selectedProject} onBack={() => setView('projects')} />
                         )}
                     </div>
                 </div>
             );
-        };
-        
-        root.render(<DemoApp />);
+
+            async function handleLogout() {
+                await supabase.auth.signOut();
+                setUser(null);
+            }
+        }
+
+        // ===== AUTH PAGE =====
+        function AuthPage({ onAuthSuccess }) {
+            const [email, setEmail]       = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [isSignUp, setIsSignUp] = React.useState(false);
+            const [error, setError]       = React.useState('');
+            const [loading, setLoading]   = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true); setError('');
+                try {
+                    if (isSignUp) {
+                        const { error: err } = await supabase.auth.signUp({ email, password });
+                        if (err) throw err;
+                        setError('✓ Check your email to confirm your account!');
+                    } else {
+                        const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+                        if (err) throw err;
+                        onAuthSuccess(data.user);
+                    }
+                } catch (err) { setError(err.message); }
+                finally { setLoading(false); }
+            };
+
+            const isSuccess = error.startsWith('✓');
+
+            return (
+                <div className="auth-wrap">
+                    <div className="auth-card">
+                        <div className="auth-brand">
+                            <div className="auth-brand-icon">📊</div>
+                            <span className="auth-brand-name">Project Dashboard</span>
+                        </div>
+                        <h1>{isSignUp ? 'Create account' : 'Welcome back'}</h1>
+                        <p className="auth-sub">{isSignUp ? 'Start tracking your projects' : 'Sign in to your workspace'}</p>
+
+                        {error && <div className={`msg ${isSuccess ? 'msg-success' : 'msg-error'}`}>{error}</div>}
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Email address</label>
+                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+                            </div>
+                            <div className="form-group">
+                                <label>Password</label>
+                                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+                            </div>
+                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                                {loading ? 'Loading…' : isSignUp ? 'Create account' : 'Sign in'}
+                            </button>
+                        </form>
+                        <button type="button" className="btn btn-ghost" onClick={() => { setIsSignUp(!isSignUp); setError(''); }}>
+                            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // ===== PROJECTS VIEW =====
+        function ProjectsView({ user, onSelectProject }) {
+            const [projects, setProjects]           = React.useState([]);
+            const [loading, setLoading]             = React.useState(true);
+            const [showNewModal, setShowNewModal]   = React.useState(false);
+            const [stats, setStats] = React.useState({
+                activeProjects: 0, totalTasks: 0,
+                pendingTasks: 0, inProgressTasks: 0,
+                completedTasks: 0, upcomingTasks: 0
+            });
+
+            React.useEffect(() => { loadProjects(); }, []);
+
+            const loadProjects = async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('projects').select('*')
+                        .eq('user_id', user.id)
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    setProjects(data || []);
+
+                    const ids = (data || []).map(p => p.id);
+                    if (ids.length > 0) {
+                        const { data: td, error: te } = await supabase
+                            .from('tasks').select('status, due_date').in('project_id', ids);
+                        if (!te && td) {
+                            const today = new Date();
+                            const in7 = new Date(today.getTime() + 7 * 864e5);
+                            setStats({
+                                activeProjects: data.filter(p => p.status === 'active').length,
+                                totalTasks: td.length,
+                                pendingTasks: td.filter(t => t.status === 'pending').length,
+                                inProgressTasks: td.filter(t => t.status === 'in-progress').length,
+                                completedTasks: td.filter(t => t.status === 'completed').length,
+                                upcomingTasks: td.filter(t => {
+                                    if (!t.due_date || t.status === 'completed') return false;
+                                    const d = new Date(t.due_date);
+                                    return d >= today && d <= in7;
+                                }).length
+                            });
+                        }
+                    } else {
+                        setStats({ activeProjects: 0, totalTasks: 0, pendingTasks: 0, inProgressTasks: 0, completedTasks: 0, upcomingTasks: 0 });
+                    }
+                } catch (err) { console.error(err); }
+                finally { setLoading(false); }
+            };
+
+            if (loading) return <div className="loading"><div className="spinner"></div>Loading projects…</div>;
+
+            return (
+                <>
+                    <div className="page-header">
+                        <div>
+                            <div className="page-title">Projects</div>
+                            <div className="page-subtitle">{projects.length} project{projects.length !== 1 ? 's' : ''}</div>
+                        </div>
+                        <button className="btn-action btn-action-primary" onClick={() => setShowNewModal(true)}>
+                            + New Project
+                        </button>
+                    </div>
+
+                    <div className="stats-grid">
+                        <div className="stat-card c-blue">  <div className="stat-num">{stats.activeProjects}</div>  <div className="stat-lbl">Active</div></div>
+                        <div className="stat-card">          <div className="stat-num">{stats.totalTasks}</div>      <div className="stat-lbl">Total Tasks</div></div>
+                        <div className="stat-card c-amber"> <div className="stat-num">{stats.pendingTasks}</div>    <div className="stat-lbl">Pending</div></div>
+                        <div className="stat-card c-sky">   <div className="stat-num">{stats.inProgressTasks}</div> <div className="stat-lbl">In Progress</div></div>
+                        <div className="stat-card c-green"> <div className="stat-num">{stats.completedTasks}</div>  <div className="stat-lbl">Completed</div></div>
+                        <div className="stat-card c-red">   <div className="stat-num">{stats.upcomingTasks}</div>   <div className="stat-lbl">Due in 7 Days</div></div>
+                    </div>
+
+                    {projects.length === 0 ? (
+                        <div className="empty">
+                            <div className="empty-icon">📋</div>
+                            <div className="empty-title">No projects yet</div>
+                            <div className="empty-desc">Create your first project to get started</div>
+                        </div>
+                    ) : (
+                        <div className="cards-grid">
+                            {projects.map(p => (
+                                <ProjectCard key={p.id} project={p}
+                                    onSelect={() => onSelectProject(p)}
+                                    onDelete={() => deleteProject(p.id)}
+                                    onRefresh={loadProjects}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {showNewModal && (
+                        <NewProjectModal user={user}
+                            onClose={() => setShowNewModal(false)}
+                            onSuccess={() => { setShowNewModal(false); loadProjects(); }}
+                        />
+                    )}
+                </>
+            );
+
+            async function deleteProject(id) {
+                if (window.confirm('Delete this project?')) {
+                    await supabase.from('projects').delete().eq('id', id);
+                    loadProjects();
+                }
+            }
+        }
+
+        // ===== PROJECT CARD =====
+        function ProjectCard({ project, onSelect, onDelete, onRefresh }) {
+            const [taskCount, setTaskCount]       = React.useState(0);
+            const [showEditModal, setShowEditModal] = React.useState(false);
+
+            React.useEffect(() => {
+                supabase.from('tasks').select('*', { count: 'exact' })
+                    .eq('project_id', project.id)
+                    .then(({ count }) => setTaskCount(count || 0));
+            }, [project.id]);
+
+            return (
+                <>
+                    <div className="project-card" onClick={onSelect}>
+                        <div className="card-title">{project.name}</div>
+                        <div className="card-desc">{project.description || 'No description'}</div>
+                        <div className="card-footer">
+                            <div className="card-meta">
+                                <span className={`badge badge-${project.status}`}>{project.status}</span>
+                                <span className="card-meta-text">{taskCount} task{taskCount !== 1 ? 's' : ''}</span>
+                                {project.end_date && (
+                                    <span className="card-meta-text">· Due {formatESTDate(new Date(project.end_date))}</span>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <button className="btn-sm btn-sm-warning" onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }}>Edit</button>
+                                <button className="btn-sm btn-sm-danger"  onClick={(e) => { e.stopPropagation(); onDelete(); }}>Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    {showEditModal && (
+                        <EditProjectModal project={project}
+                            onClose={() => setShowEditModal(false)}
+                            onSuccess={() => { setShowEditModal(false); onRefresh(); }}
+                        />
+                    )}
+                </>
+            );
+        }
+
+        // ===== NEW PROJECT MODAL =====
+        function NewProjectModal({ user, onClose, onSuccess }) {
+            const [name, setName]               = React.useState('');
+            const [description, setDescription] = React.useState('');
+            const [startDate, setStartDate]     = React.useState('');
+            const [endDate, setEndDate]         = React.useState('');
+            const [loading, setLoading]         = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault(); setLoading(true);
+                try {
+                    const { error } = await supabase.from('projects').insert({
+                        user_id: user.id, name, description,
+                        start_date: startDate || null,
+                        end_date: endDate || null,
+                        status: 'active'
+                    });
+                    if (error) throw error;
+                    onSuccess();
+                } catch (err) { console.error(err); }
+                finally { setLoading(false); }
+            };
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-box">
+                        <div className="modal-head">
+                            <div className="modal-title">New Project</div>
+                            <button className="modal-close" onClick={onClose}>✕</button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Project Name *</label>
+                                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. HVAC Installation – Block C" required />
+                            </div>
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description…" />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Start Date</label>
+                                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>End Date</label>
+                                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="btn btn-ghost" style={{margin:0}} onClick={onClose}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Creating…' : 'Create Project'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // ===== EDIT PROJECT MODAL =====
+        function EditProjectModal({ project, onClose, onSuccess }) {
+            const [name, setName]               = React.useState(project.name);
+            const [description, setDescription] = React.useState(project.description || '');
+            const [startDate, setStartDate]     = React.useState(project.start_date || '');
+            const [endDate, setEndDate]         = React.useState(project.end_date || '');
+            const [status, setStatus]           = React.useState(project.status);
+            const [loading, setLoading]         = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault(); setLoading(true);
+                try {
+                    const { error } = await supabase.from('projects')
+                        .update({ name, description, start_date: startDate || null, end_date: endDate || null, status })
+                        .eq('id', project.id);
+                    if (error) throw error;
+                    onSuccess();
+                } catch (err) { console.error(err); }
+                finally { setLoading(false); }
+            };
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-box">
+                        <div className="modal-head">
+                            <div className="modal-title">Edit Project</div>
+                            <button className="modal-close" onClick={onClose}>✕</button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Project Name *</label>
+                                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Start Date</label>
+                                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>End Date</label>
+                                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Status</label>
+                                <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                                    <option value="active">Active</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="btn btn-ghost" style={{margin:0}} onClick={onClose}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Updating…' : 'Update Project'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // ===== PROJECT DETAIL VIEW =====
+        function ProjectDetailView({ project, onBack }) {
+            const [tasks, setTasks]               = React.useState([]);
+            const [files, setFiles]               = React.useState([]);
+            const [loading, setLoading]           = React.useState(true);
+            const [showNewTaskModal, setShowNewTaskModal] = React.useState(false);
+
+            React.useEffect(() => { loadData(); }, [project.id]);
+
+            const loadData = async () => {
+                try {
+                    const [td, fd] = await Promise.all([
+                        supabase.from('tasks').select('*').eq('project_id', project.id),
+                        supabase.from('file_uploads').select('*').eq('project_id', project.id)
+                    ]);
+                    setTasks(td.data || []);
+                    setFiles(fd.data || []);
+                } catch (err) { console.error(err); }
+                finally { setLoading(false); }
+            };
+
+            if (loading) return <div className="loading"><div className="spinner"></div>Loading project…</div>;
+
+            return (
+                <>
+                    <button className="back-btn" onClick={onBack}>← Back to Projects</button>
+
+                    <div className="page-header">
+                        <div>
+                            <div className="page-title">{project.name}</div>
+                            {project.description && <div className="page-subtitle">{project.description}</div>}
+                        </div>
+                        <button className="btn-action btn-action-primary" onClick={() => setShowNewTaskModal(true)}>
+                            + Add Task
+                        </button>
+                    </div>
+
+                    <div className="section-label">Tasks</div>
+
+                    {tasks.length === 0 ? (
+                        <div className="empty" style={{ padding: '28px 0' }}>
+                            <div className="empty-icon">✅</div>
+                            <div className="empty-title">No tasks yet</div>
+                            <div className="empty-desc">Add a task to track progress</div>
+                        </div>
+                    ) : (
+                        <div style={{ marginBottom: '24px' }}>
+                            {tasks.map(task => (
+                                <TaskItem key={task.id} task={task}
+                                    onDelete={() => deleteTask(task.id)}
+                                    onStatusChange={(s) => updateTaskStatus(task.id, s)}
+                                    onRefresh={loadData}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="divider"></div>
+                    <div className="section-label">Files</div>
+                    <FileUpload projectId={project.id} onUploadSuccess={loadData} />
+
+                    {files.length > 0 && (
+                        <div style={{ marginTop: '10px' }}>
+                            {files.map(f => (
+                                <div key={f.id} className="file-item">
+                                    <a href={f.file_url} target="_blank" rel="noopener noreferrer">📄 {f.file_name}</a>
+                                    <button className="btn-sm btn-sm-danger" onClick={() => deleteFile(f.id)}>Delete</button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {showNewTaskModal && (
+                        <NewTaskModal projectId={project.id}
+                            onClose={() => setShowNewTaskModal(false)}
+                            onSuccess={() => { setShowNewTaskModal(false); loadData(); }}
+                        />
+                    )}
+                </>
+            );
+
+            async function deleteTask(id) {
+                if (window.confirm('Delete this task?')) {
+                    await supabase.from('tasks').delete().eq('id', id);
+                    loadData();
+                }
+            }
+            async function updateTaskStatus(id, status) {
+                await supabase.from('tasks').update({ status }).eq('id', id);
+                loadData();
+            }
+            async function deleteFile(id) {
+                if (window.confirm('Delete this file?')) {
+                    await supabase.from('file_uploads').delete().eq('id', id);
+                    loadData();
+                }
+            }
+        }
+
+        // ===== TASK ITEM =====
+        function TaskItem({ task, onDelete, onStatusChange, onRefresh }) {
+            const [showEdit, setShowEdit] = React.useState(false);
+            const isCompleted = task.status === 'completed';
+
+            return (
+                <>
+                    <div className={`task-card ${isCompleted ? 'done' : ''}`}>
+                        <div className="task-row">
+                            <div style={{ flex: 1 }}>
+                                <div className="task-title">{task.title}</div>
+                                {task.description && <div className="task-desc">{task.description}</div>}
+                                <div className="task-meta">
+                                    {task.due_date && <span>Due: {formatESTDate(new Date(task.due_date))}</span>}
+                                    <span className={`badge badge-${task.priority}`}>{task.priority}</span>
+                                    <span className={`badge badge-${task.status}`}>{task.status}</span>
+                                </div>
+                            </div>
+                            <div className="task-controls">
+                                <select className="status-select" value={task.status} onChange={(e) => onStatusChange(e.target.value)}>
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                                <button className="btn-sm btn-sm-warning" onClick={() => setShowEdit(true)}>Edit</button>
+                                <button className="btn-sm btn-sm-danger"  onClick={onDelete}>Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    {showEdit && (
+                        <EditTaskModal task={task}
+                            onClose={() => setShowEdit(false)}
+                            onSuccess={() => { setShowEdit(false); onRefresh(); }}
+                        />
+                    )}
+                </>
+            );
+        }
+
+        // ===== NEW TASK MODAL =====
+        function NewTaskModal({ projectId, onClose, onSuccess }) {
+            const [title, setTitle]             = React.useState('');
+            const [description, setDescription] = React.useState('');
+            const [dueDate, setDueDate]         = React.useState('');
+            const [priority, setPriority]       = React.useState('medium');
+            const [loading, setLoading]         = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault(); setLoading(true);
+                try {
+                    const { error } = await supabase.from('tasks').insert({
+                        project_id: projectId, title, description,
+                        due_date: dueDate || null, priority, status: 'pending'
+                    });
+                    if (error) throw error;
+                    onSuccess();
+                } catch (err) { console.error(err); }
+                finally { setLoading(false); }
+            };
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-box">
+                        <div className="modal-head">
+                            <div className="modal-title">New Task</div>
+                            <button className="modal-close" onClick={onClose}>✕</button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Task Title *</label>
+                                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs to be done?" required />
+                            </div>
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Additional details…" />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Priority</label>
+                                    <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Due Date</label>
+                                    <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="btn btn-ghost" style={{margin:0}} onClick={onClose}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Creating…' : 'Create Task'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // ===== EDIT TASK MODAL =====
+        function EditTaskModal({ task, onClose, onSuccess }) {
+            const [title, setTitle]             = React.useState(task.title);
+            const [description, setDescription] = React.useState(task.description || '');
+            const [dueDate, setDueDate]         = React.useState(task.due_date || '');
+            const [priority, setPriority]       = React.useState(task.priority);
+            const [status, setStatus]           = React.useState(task.status);
+            const [loading, setLoading]         = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault(); setLoading(true);
+                try {
+                    const { error } = await supabase.from('tasks')
+                        .update({ title, description, due_date: dueDate || null, priority, status })
+                        .eq('id', task.id);
+                    if (error) throw error;
+                    onSuccess();
+                } catch (err) { console.error(err); }
+                finally { setLoading(false); }
+            };
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-box">
+                        <div className="modal-head">
+                            <div className="modal-title">Edit Task</div>
+                            <button className="modal-close" onClick={onClose}>✕</button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Task Title *</label>
+                                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Priority</label>
+                                    <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Due Date</label>
+                                    <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Status</label>
+                                <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="btn btn-ghost" style={{margin:0}} onClick={onClose}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Updating…' : 'Update Task'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // ===== FILE UPLOAD =====
+        function FileUpload({ projectId, onUploadSuccess }) {
+            const [loading, setLoading] = React.useState(false);
+
+            const handleFileChange = async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setLoading(true);
+                try {
+                    const fileName = `${projectId}/${Date.now()}_${file.name}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('project-files').upload(fileName, file);
+                    if (uploadError) throw uploadError;
+                    const { data } = supabase.storage.from('project-files').getPublicUrl(fileName);
+                    await supabase.from('file_uploads').insert({
+                        project_id: projectId,
+                        file_name: file.name,
+                        file_size: file.size,
+                        file_type: file.type,
+                        file_url: data.publicUrl
+                    });
+                    onUploadSuccess();
+                    e.target.value = '';
+                } catch (err) {
+                    console.error(err);
+                    alert('Error uploading file: ' + err.message);
+                } finally { setLoading(false); }
+            };
+
+            return (
+                <div className="upload-zone">
+                    <label>{loading ? '⏳ Uploading…' : '📎 Click to attach a file'}</label>
+                    <input type="file" onChange={handleFileChange} disabled={loading}
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                        style={{ width: '100%' }} />
+                </div>
+            );
+        }
+
+        // Render app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>

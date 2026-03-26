@@ -1046,7 +1046,9 @@
             const [loading, setLoading]     = React.useState(true);
             const [totalCount, setTotalCount] = React.useState(0);
             const [streaks, setStreaks]     = React.useState({ currentStreak: 0, longestStreak: 0 });
+            const [resetDaily, setResetDaily] = React.useState(habit.reset_daily);
 
+            React.useEffect(() => { setResetDaily(habit.reset_daily); }, [habit.reset_daily]);
             React.useEffect(() => { loadLogs(); }, [habit.id]);
 
             const loadLogs = async () => {
@@ -1065,12 +1067,17 @@
             };
 
             const handleToggleReset = async () => {
+                const newValue = !resetDaily;
+                setResetDaily(newValue);
                 try {
                     await supabase.from('habits')
-                        .update({ reset_daily: !habit.reset_daily, last_reset_date: getNYCDate() })
+                        .update({ reset_daily: newValue, last_reset_date: getNYCDate() })
                         .eq('id', habit.id);
                     onRefresh();
-                } catch (err) { console.error(err); }
+                } catch (err) {
+                    console.error(err);
+                    setResetDaily(resetDaily);
+                }
             };
 
             const handleResetDaily = async () => {
@@ -1135,11 +1142,11 @@
                                 <input
                                     type="checkbox"
                                     className="toggle-check"
-                                    checked={habit.reset_daily}
+                                    checked={resetDaily}
                                     onChange={handleToggleReset}
                                 />
                             </div>
-                            {habit.reset_daily && (
+                            {resetDaily && (
                                 <div className="reset-badge">✓ Daily reset enabled</div>
                             )}
                             <button className="btn btn-ghost" style={{ width: '100%', marginTop: '12px', background: 'var(--warning-light)', color: 'var(--warning)', border: 'none' }} onClick={handleResetDaily}>

@@ -660,33 +660,26 @@
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // ===== TIMEZONE UTILITIES (NYC) =====
-        // EDT (Eastern Daylight Time) = UTC-4
-        function getTimezoneOffset() { return -4; }
-
         function getNYCDate() {
             const now = new Date();
-            const offset = getTimezoneOffset();
-            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const nycTime = new Date(utcTime + (offset * 3600000));
-            const year  = nycTime.getUTCFullYear();
-            const month = String(nycTime.getUTCMonth() + 1).padStart(2, '0');
-            const day   = String(nycTime.getUTCDate()).padStart(2, '0');
+            const nycTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            const year  = nycTime.getFullYear();
+            const month = String(nycTime.getMonth() + 1).padStart(2, '0');
+            const day   = String(nycTime.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
 
         function getNYCTimeString() {
             const now = new Date();
-            const offset = getTimezoneOffset();
-            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const nycTime = new Date(utcTime + (offset * 3600000));
+            const nycTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
             const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const dayName   = days[nycTime.getUTCDay()];
-            const monthName = months[nycTime.getUTCMonth()];
-            const date    = nycTime.getUTCDate();
-            const hours   = nycTime.getUTCHours();
-            const minutes = String(nycTime.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(nycTime.getUTCSeconds()).padStart(2, '0');
+            const dayName   = days[nycTime.getDay()];
+            const monthName = months[nycTime.getMonth()];
+            const date    = nycTime.getDate();
+            const hours   = nycTime.getHours();
+            const minutes = String(nycTime.getMinutes()).padStart(2, '0');
+            const seconds = String(nycTime.getSeconds()).padStart(2, '0');
             const ampm    = hours >= 12 ? 'PM' : 'AM';
             const h12     = hours % 12 || 12;
             return `${dayName} ${monthName} ${date}  ${String(h12).padStart(2,'0')}:${minutes}:${seconds} ${ampm} EDT`;
@@ -699,10 +692,8 @@
                 const dates = new Set();
                 allLogs.forEach(log => {
                     const date = new Date(log.timestamp);
-                    const offset = getTimezoneOffset();
-                    const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-                    const nycTime = new Date(utcTime + (offset * 3600000));
-                    dates.add(nycTime.toISOString().split('T')[0]);
+                    const nycTime = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+                    dates.add(`${nycTime.getFullYear()}-${String(nycTime.getMonth() + 1).padStart(2, '0')}-${String(nycTime.getDate()).padStart(2, '0')}`);
                 });
 
                 const sortedDates = Array.from(dates).sort().reverse();
@@ -745,12 +736,10 @@
         }
 
         function getNYCDateFromDate(date) {
-            const offset = getTimezoneOffset();
-            const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-            const nycTime = new Date(utcTime + (offset * 3600000));
-            const year  = nycTime.getUTCFullYear();
-            const month = String(nycTime.getUTCMonth() + 1).padStart(2, '0');
-            const day   = String(nycTime.getUTCDate()).padStart(2, '0');
+            const nycTime = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            const year  = nycTime.getFullYear();
+            const month = String(nycTime.getMonth() + 1).padStart(2, '0');
+            const day   = String(nycTime.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
 
@@ -876,6 +865,7 @@
             const [loading, setLoading]       = React.useState(true);
             const [newHabitName, setNewHabitName] = React.useState('');
             const [selectedHabit, setSelectedHabit] = React.useState(null);
+            const [habitSortBy, setHabitSortBy] = React.useState('created');
 
             React.useEffect(() => {
                 loadHabits();
@@ -960,12 +950,37 @@
                 } catch (err) { console.error(err); }
             };
 
+            const getSortedHabits = () => {
+                const sorted = [...habits];
+                switch (habitSortBy) {
+                    case 'today':
+                        return sorted.sort((a, b) => b.count - a.count);
+                    case 'streak':
+                        return sorted.sort((a, b) => b.current_streak - a.current_streak);
+                    case 'name':
+                        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+                    case 'created':
+                    default:
+                        return sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                }
+            };
+
             if (loading) return <div className="loading"><div className="spinner"></div>Loading habits…</div>;
 
             return (
                 <>
                     <div className="page-header">
                         <div className="page-title">My Habits</div>
+                        <select
+                            value={habitSortBy}
+                            onChange={(e) => setHabitSortBy(e.target.value)}
+                            style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px', cursor: 'pointer' }}
+                        >
+                            <option value="created">Newest</option>
+                            <option value="today">Today's Count</option>
+                            <option value="streak">Current Streak</option>
+                            <option value="name">Name (A-Z)</option>
+                        </select>
                     </div>
 
                     <form onSubmit={handleAddHabit}>
@@ -990,10 +1005,13 @@
                         </div>
                     ) : (
                         <div>
-                            {habits.map(habit => (
+                            {getSortedHabits().map(habit => (
                                 <div key={habit.id} className="habit-card" onClick={() => setSelectedHabit(habit)}>
                                     <div className="habit-row">
-                                        <div className="habit-name">{habit.name}</div>
+                                        <div className="habit-name">
+                                            {habit.name}
+                                            {habit.reset_daily && <span style={{ marginLeft: '6px', fontSize: '12px', opacity: 0.6 }}>🕐</span>}
+                                        </div>
                                         <div className="habit-counter">
                                             <button
                                                 className="counter-btn counter-decrement"
@@ -1055,6 +1073,17 @@
                 } catch (err) { console.error(err); }
             };
 
+            const handleResetDaily = async () => {
+                if (window.confirm('Reset today\'s count to 0? (All-time count stays the same)')) {
+                    try {
+                        await supabase.from('habits')
+                            .update({ count: 0, last_reset_date: getNYCDate() })
+                            .eq('id', habit.id);
+                        onRefresh();
+                    } catch (err) { console.error(err); }
+                }
+            };
+
             const handleDelete = async () => {
                 if (window.confirm('Delete this habit and all history?')) {
                     try {
@@ -1113,6 +1142,9 @@
                             {habit.reset_daily && (
                                 <div className="reset-badge">✓ Daily reset enabled</div>
                             )}
+                            <button className="btn btn-ghost" style={{ width: '100%', marginTop: '12px', background: 'var(--warning-light)', color: 'var(--warning)', border: 'none' }} onClick={handleResetDaily}>
+                                Reset Today's Count
+                            </button>
                         </div>
 
                         {/* History */}
@@ -1127,16 +1159,14 @@
                                     <div className="history-list">
                                         {logs.map((log, idx) => {
                                             const timestamp = new Date(log.timestamp);
-                                            const offset = getTimezoneOffset();
-                                            const utcTime = timestamp.getTime() + (timestamp.getTimezoneOffset() * 60000);
-                                            const nycTime = new Date(utcTime + (offset * 3600000));
+                                            const nycTime = new Date(timestamp.toLocaleString('en-US', { timeZone: 'America/New_York' }));
                                             const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
                                             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                                            const dayName   = days[nycTime.getUTCDay()];
-                                            const monthName = months[nycTime.getUTCMonth()];
-                                            const date    = nycTime.getUTCDate();
-                                            const hours   = nycTime.getUTCHours();
-                                            const minutes = String(nycTime.getUTCMinutes()).padStart(2, '0');
+                                            const dayName   = days[nycTime.getDay()];
+                                            const monthName = months[nycTime.getMonth()];
+                                            const date    = nycTime.getDate();
+                                            const hours   = nycTime.getHours();
+                                            const minutes = String(nycTime.getMinutes()).padStart(2, '0');
                                             const ampm    = hours >= 12 ? 'PM' : 'AM';
                                             const h12     = hours % 12 || 12;
                                             const timeStr = `${dayName} ${monthName} ${date}  ${String(h12).padStart(2,'0')}:${minutes} ${ampm}`;

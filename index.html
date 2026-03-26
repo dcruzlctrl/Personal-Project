@@ -797,6 +797,7 @@
             const [projects, setProjects]           = React.useState([]);
             const [loading, setLoading]             = React.useState(true);
             const [showNewModal, setShowNewModal]   = React.useState(false);
+            const [projectSortBy, setProjectSortBy] = React.useState('created');
             const [stats, setStats] = React.useState({
                 activeProjects: 0, totalTasks: 0,
                 pendingTasks: 0, inProgressTasks: 0,
@@ -841,6 +842,23 @@
                 finally { setLoading(false); }
             };
 
+            const getSortedProjects = () => {
+                const sorted = [...projects];
+                const taskCounts = {};
+                projects.forEach(p => {
+                    taskCounts[p.id] = (p.tasks && p.tasks.length) || 0;
+                });
+                switch (projectSortBy) {
+                    case 'tasks':
+                        return sorted.sort((a, b) => (taskCounts[b.id] || 0) - (taskCounts[a.id] || 0));
+                    case 'name':
+                        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+                    case 'created':
+                    default:
+                        return sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                }
+            };
+
             if (loading) return <div className="loading"><div className="spinner"></div>Loading projects…</div>;
 
             return (
@@ -850,9 +868,20 @@
                             <div className="page-title">Projects</div>
                             <div className="page-subtitle">{projects.length} project{projects.length !== 1 ? 's' : ''}</div>
                         </div>
-                        <button className="btn-action btn-action-primary" onClick={() => setShowNewModal(true)}>
-                            + New Project
-                        </button>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <select
+                                value={projectSortBy}
+                                onChange={(e) => setProjectSortBy(e.target.value)}
+                                style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px', cursor: 'pointer' }}
+                            >
+                                <option value="created">Newest</option>
+                                <option value="tasks">Most Tasks</option>
+                                <option value="name">Name (A-Z)</option>
+                            </select>
+                            <button className="btn-action btn-action-primary" onClick={() => setShowNewModal(true)}>
+                                + New Project
+                            </button>
+                        </div>
                     </div>
 
                     <div className="stats-grid">
@@ -872,7 +901,7 @@
                         </div>
                     ) : (
                         <div className="cards-grid">
-                            {projects.map(p => (
+                            {getSortedProjects().map(p => (
                                 <ProjectCard key={p.id} project={p}
                                     onSelect={() => onSelectProject(p)}
                                     onDelete={() => deleteProject(p.id)}

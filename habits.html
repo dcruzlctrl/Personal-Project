@@ -621,6 +621,95 @@
         .history-pos { color: var(--success); font-weight: 700; font-family: var(--font-mono); }
         .history-neg { color: var(--danger);  font-weight: 700; font-family: var(--font-mono); }
 
+        /* ===== CALENDAR ===== */
+        .modal-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border-std);
+            margin-bottom: 16px;
+        }
+        .modal-tab {
+            flex: 1;
+            padding: 10px 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .modal-tab:hover { color: var(--text); }
+        .modal-tab--active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .cal-nav-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-radius: var(--radius-xs);
+            transition: all 0.15s ease;
+        }
+        .cal-nav-btn:hover { background: var(--surface); color: var(--accent); }
+        .cal-month-label { font-size: 13px; font-weight: 600; letter-spacing: -0.3px; }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+            margin-bottom: 12px;
+        }
+        .cal-dow {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-subtle);
+            font-weight: 500;
+            padding-bottom: 4px;
+        }
+        .cal-day {
+            aspect-ratio: 1;
+            border-radius: var(--radius-xs);
+            position: relative;
+            cursor: default;
+            font-size: 11px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 2px;
+            transition: outline 0.15s ease;
+        }
+        .cal-day--pad { background: transparent; }
+        .cal-day--today { outline: 2px solid var(--accent); outline-offset: -2px; }
+        .cal-day--streak { background: var(--accent-light); }
+        .cal-day-num { font-family: var(--font-mono); color: var(--text); font-size: 10px; font-weight: 500; }
+        .cal-day--streak .cal-day-num { color: var(--accent); }
+
+        .cal-stats {
+            display: flex;
+            gap: 8px;
+        }
+        .cal-stat {
+            flex: 1;
+            padding: 10px 12px;
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            text-align: center;
+        }
+        .cal-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+        .cal-stat-val { font-size: 18px; font-weight: 800; font-family: var(--font-mono); color: var(--accent); }
+
         /* ===== STATES ===== */
         .empty {
             text-align: center;
@@ -742,6 +831,201 @@
             return `${year}-${month}-${day}`;
         }
 
+        // ===== CALENDAR UTILITIES =====
+        function buildDayMap(logs, year, month) {
+            const dayMap = {};
+            (logs || []).forEach(log => {
+                const date = getNYCDateFromDate(new Date(log.timestamp));
+                const logYear = parseInt(date.substring(0, 4));
+                const logMonth = parseInt(date.substring(5, 7)) - 1; // 0-indexed
+                if (logYear === year && logMonth === month) {
+                    const dayStr = date;
+                    dayMap[dayStr] = (dayMap[dayStr] || 0) + log.change;
+                }
+            });
+            return dayMap;
+        }
+
+        function getStreakDateSet(logs) {
+            const allLogs = (logs || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const dates = new Set();
+            allLogs.forEach(log => {
+                const date = getNYCDateFromDate(new Date(log.timestamp));
+                dates.add(date);
+            });
+            const sortedDates = Array.from(dates).sort().reverse();
+            const streakDates = new Set();
+            const today = getNYCDate();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = getNYCDateFromDate(yesterday);
+            let checkDate = today;
+            for (const date of sortedDates) {
+                if (date === checkDate || date === yesterdayStr) {
+                    streakDates.add(date);
+                    const nextCheck = new Date(date.substring(0, 4), parseInt(date.substring(5, 7)) - 1, parseInt(date.substring(8, 10)));
+                    nextCheck.setDate(nextCheck.getDate() - 1);
+                    checkDate = getNYCDateFromDate(nextCheck);
+                } else {
+                    break;
+                }
+            }
+            return streakDates;
+        }
+
+        // ===== CALENDAR COMPONENTS =====
+        function CalendarGrid({ year, month, dayMap, maxVal, streakDates, today, onPrev, onNext }) {
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const dowNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Build calendar cells
+            const cells = [];
+            for (let i = 0; i < firstDay; i++) cells.push({ type: 'pad' });
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                cells.push({ type: 'day', date: dateStr, day: d });
+            }
+            const rows = [];
+            for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
+
+            const getHeatColor = (dateStr) => {
+                const val = dayMap[dateStr] ?? 0;
+                if (val === 0) return 'transparent';
+                const ratio = maxVal === 0 ? 0 : val / maxVal;
+                if (ratio <= 0.25) return '#ccfbf1';
+                if (ratio <= 0.5) return '#99f6e4';
+                if (ratio <= 0.75) return '#2dd4bf';
+                return '#0d9488';
+            };
+
+            const getTextColor = (dateStr) => {
+                const val = dayMap[dateStr] ?? 0;
+                const ratio = maxVal === 0 ? 0 : val / maxVal;
+                return ratio > 0.5 ? 'white' : 'var(--text)';
+            };
+
+            const getStreakRadii = (cell, rowIdx) => {
+                if (cell.type === 'pad' || !streakDates.has(cell.date)) return 'var(--radius-xs)';
+                const row = rows[rowIdx];
+                const idx = row.indexOf(cell);
+                const leftConnected = idx > 0 && row[idx - 1].type === 'day' && streakDates.has(row[idx - 1].date);
+                const rightConnected = idx < row.length - 1 && row[idx + 1].type === 'day' && streakDates.has(row[idx + 1].date);
+
+                if (leftConnected && rightConnected) return '0';
+                if (leftConnected) return `0 var(--radius-xs) var(--radius-xs) 0`;
+                if (rightConnected) return `var(--radius-xs) 0 0 var(--radius-xs)`;
+                return 'var(--radius-xs)';
+            };
+
+            return (
+                <div>
+                    <div className="cal-nav">
+                        <button className="cal-nav-btn" onClick={onPrev}>←</button>
+                        <div className="cal-month-label">{monthNames[month]} {year}</div>
+                        <button className="cal-nav-btn" onClick={onNext}>→</button>
+                    </div>
+                    <div className="cal-grid">
+                        {dowNames.map(dow => <div key={dow} className="cal-dow">{dow}</div>)}
+                        {rows.map((row, rowIdx) => row.map(cell => {
+                            if (cell.type === 'pad') return <div key={`pad-${rowIdx}`} className="cal-day cal-day--pad"></div>;
+                            const isStreak = streakDates.has(cell.date);
+                            const isToday = cell.date === today;
+                            return (
+                                <div
+                                    key={cell.date}
+                                    className={`cal-day ${isStreak ? 'cal-day--streak' : ''} ${isToday ? 'cal-day--today' : ''}`}
+                                    style={{
+                                        background: isStreak ? '#a7f3d0' : getHeatColor(cell.date),
+                                        borderRadius: getStreakRadii(cell, rowIdx)
+                                    }}
+                                >
+                                    <span className="cal-day-num" style={{ color: isStreak ? 'var(--accent)' : getTextColor(cell.date) }}>
+                                        {cell.day}
+                                    </span>
+                                </div>
+                            );
+                        }))}
+                    </div>
+                </div>
+            );
+        }
+
+        function CalendarStats({ year, month, dayMap, label }) {
+            const today = getNYCDate();
+            const todayYear = parseInt(today.substring(0, 4));
+            const todayMonth = parseInt(today.substring(5, 7)) - 1;
+            const isCurrentMonth = year === todayYear && month === todayMonth;
+            const daysElapsed = isCurrentMonth ? parseInt(today.substring(8, 10)) : new Date(year, month + 1, 0).getDate();
+            const activeDays = Object.values(dayMap).filter(v => v > 0).length;
+            const totalVal = Object.values(dayMap).reduce((s, v) => s + v, 0);
+            const avgDaily = daysElapsed > 0 ? (totalVal / daysElapsed).toFixed(1) : '0.0';
+            const weeksElapsed = daysElapsed / 7;
+            const avgPerWeek = weeksElapsed > 0 ? (activeDays / weeksElapsed).toFixed(1) : '0.0';
+
+            return (
+                <div className="cal-stats">
+                    <div className="cal-stat">
+                        <div className="cal-stat-lbl">Avg/day</div>
+                        <div className="cal-stat-val">{avgDaily}</div>
+                    </div>
+                    <div className="cal-stat">
+                        <div className="cal-stat-lbl">Active/week</div>
+                        <div className="cal-stat-val">{avgPerWeek}</div>
+                    </div>
+                    <div className="cal-stat">
+                        <div className="cal-stat-lbl">Total</div>
+                        <div className="cal-stat-val">{totalVal}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        function HabitCalendar({ logs, habitName }) {
+            const today = getNYCDate();
+            const [viewYear, setViewYear] = React.useState(parseInt(today.substring(0, 4)));
+            const [viewMonth, setViewMonth] = React.useState(parseInt(today.substring(5, 7)) - 1);
+
+            const dayMap = buildDayMap(logs, viewYear, viewMonth);
+            const maxVal = Math.max(0, ...Object.values(dayMap));
+            const streakDates = getStreakDateSet(logs);
+
+            const handlePrev = () => {
+                if (viewMonth === 0) {
+                    setViewMonth(11);
+                    setViewYear(viewYear - 1);
+                } else {
+                    setViewMonth(viewMonth - 1);
+                }
+            };
+
+            const handleNext = () => {
+                if (viewMonth === 11) {
+                    setViewMonth(0);
+                    setViewYear(viewYear + 1);
+                } else {
+                    setViewMonth(viewMonth + 1);
+                }
+            };
+
+            return (
+                <div>
+                    <CalendarGrid
+                        year={viewYear}
+                        month={viewMonth}
+                        dayMap={dayMap}
+                        maxVal={maxVal}
+                        streakDates={streakDates}
+                        today={today}
+                        onPrev={handlePrev}
+                        onNext={handleNext}
+                    />
+                    <CalendarStats year={viewYear} month={viewMonth} dayMap={dayMap} label="actions" />
+                </div>
+            );
+        }
+
         // ===== MAIN APP =====
         function App() {
             const [user, setUser]           = React.useState(null);
@@ -858,6 +1142,121 @@
             );
         }
 
+        // ===== MASTER CALENDAR MODAL =====
+        function MasterCalendarModal({ userId, habits, onClose }) {
+            const [allLogs, setAllLogs] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+            const today = getNYCDate();
+            const [viewYear, setViewYear] = React.useState(parseInt(today.substring(0, 4)));
+            const [viewMonth, setViewMonth] = React.useState(parseInt(today.substring(5, 7)) - 1);
+
+            React.useEffect(() => {
+                loadAllLogs();
+            }, []);
+
+            const loadAllLogs = async () => {
+                try {
+                    const habitIds = habits.map(h => h.id);
+                    if (habitIds.length === 0) {
+                        setAllLogs([]);
+                        setLoading(false);
+                        return;
+                    }
+                    const { data, error } = await supabase
+                        .from('habit_logs')
+                        .select('habit_id, change, timestamp')
+                        .in('habit_id', habitIds);
+                    if (error) throw error;
+                    setAllLogs(data || []);
+                } catch (err) {
+                    console.error('Error loading all logs:', err);
+                    setAllLogs([]);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            // Build dayMap where each day = distinct habit count
+            const buildMasterDayMap = (logs, year, month) => {
+                const dayMap = {};
+                const dayHabits = {}; // date -> Set of habit_ids
+                (logs || []).forEach(log => {
+                    const date = getNYCDateFromDate(new Date(log.timestamp));
+                    const logYear = parseInt(date.substring(0, 4));
+                    const logMonth = parseInt(date.substring(5, 7)) - 1;
+                    if (logYear === year && logMonth === month && log.change > 0) {
+                        if (!dayHabits[date]) dayHabits[date] = new Set();
+                        dayHabits[date].add(log.habit_id);
+                    }
+                });
+                Object.keys(dayHabits).forEach(date => {
+                    dayMap[date] = dayHabits[date].size;
+                });
+                return dayMap;
+            };
+
+            const masterDayMap = buildMasterDayMap(allLogs, viewYear, viewMonth);
+            const maxVal = Math.max(0, ...Object.values(masterDayMap), habits.length);
+
+            const handlePrev = () => {
+                if (viewMonth === 0) {
+                    setViewMonth(11);
+                    setViewYear(viewYear - 1);
+                } else {
+                    setViewMonth(viewMonth - 1);
+                }
+            };
+
+            const handleNext = () => {
+                if (viewMonth === 11) {
+                    setViewMonth(0);
+                    setViewYear(viewYear + 1);
+                } else {
+                    setViewMonth(viewMonth + 1);
+                }
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal-box" onClick={e => e.stopPropagation()}>
+                        <div className="modal-head">
+                            <div className="modal-title">Habits Overview</div>
+                            <button className="modal-close" onClick={onClose}>✕</button>
+                        </div>
+
+                        {loading ? (
+                            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
+                                <div className="spinner" style={{ margin: '0 auto' }}></div>
+                            </div>
+                        ) : (
+                            <>
+                                <CalendarGrid
+                                    year={viewYear}
+                                    month={viewMonth}
+                                    dayMap={masterDayMap}
+                                    maxVal={maxVal}
+                                    streakDates={new Set()}
+                                    today={today}
+                                    onPrev={handlePrev}
+                                    onNext={handleNext}
+                                />
+                                <CalendarStats
+                                    year={viewYear}
+                                    month={viewMonth}
+                                    dayMap={masterDayMap}
+                                    label="habits"
+                                />
+                            </>
+                        )}
+
+                        <div className="modal-footer">
+                            <button className="btn btn-primary" onClick={onClose}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         // ===== HABITS VIEW =====
         function HabitsView({ user }) {
             const [habits, setHabits]         = React.useState([]);
@@ -865,6 +1264,7 @@
             const [newHabitName, setNewHabitName] = React.useState('');
             const [selectedHabit, setSelectedHabit] = React.useState(null);
             const [habitSortBy, setHabitSortBy] = React.useState('created');
+            const [showMasterCalendar, setShowMasterCalendar] = React.useState(false);
 
             React.useEffect(() => {
                 loadHabits();
@@ -970,16 +1370,25 @@
                 <>
                     <div className="page-header">
                         <div className="page-title">My Habits</div>
-                        <select
-                            value={habitSortBy}
-                            onChange={(e) => setHabitSortBy(e.target.value)}
-                            style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px', cursor: 'pointer' }}
-                        >
-                            <option value="created">Newest</option>
-                            <option value="today">Today's Count</option>
-                            <option value="streak">Current Streak</option>
-                            <option value="name">Name (A-Z)</option>
-                        </select>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                                className="btn btn-sm btn-sm-primary"
+                                onClick={() => setShowMasterCalendar(true)}
+                                style={{ padding: '6px 10px', fontSize: '13px' }}
+                            >
+                                📅 Overview
+                            </button>
+                            <select
+                                value={habitSortBy}
+                                onChange={(e) => setHabitSortBy(e.target.value)}
+                                style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px', cursor: 'pointer' }}
+                            >
+                                <option value="created">Newest</option>
+                                <option value="today">Today's Count</option>
+                                <option value="streak">Current Streak</option>
+                                <option value="name">Name (A-Z)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <form onSubmit={handleAddHabit}>
@@ -1035,6 +1444,14 @@
                             onRefresh={loadHabits}
                         />
                     )}
+
+                    {showMasterCalendar && (
+                        <MasterCalendarModal
+                            userId={user.id}
+                            habits={habits}
+                            onClose={() => setShowMasterCalendar(false)}
+                        />
+                    )}
                 </>
             );
         }
@@ -1046,6 +1463,7 @@
             const [totalCount, setTotalCount] = React.useState(0);
             const [streaks, setStreaks]     = React.useState({ currentStreak: 0, longestStreak: 0 });
             const [resetDaily, setResetDaily] = React.useState(habit.reset_daily);
+            const [activeTab, setActiveTab] = React.useState('overview');
 
             React.useEffect(() => { setResetDaily(habit.reset_daily); }, [habit.reset_daily]);
             React.useEffect(() => { loadLogs(); }, [habit.id]);
@@ -1107,6 +1525,23 @@
                             <button className="modal-close" onClick={onClose}>✕</button>
                         </div>
 
+                        <div className="modal-tabs">
+                            <button
+                                className={`modal-tab ${activeTab === 'overview' ? 'modal-tab--active' : ''}`}
+                                onClick={() => setActiveTab('overview')}
+                            >
+                                Overview
+                            </button>
+                            <button
+                                className={`modal-tab ${activeTab === 'calendar' ? 'modal-tab--active' : ''}`}
+                                onClick={() => setActiveTab('calendar')}
+                            >
+                                Calendar
+                            </button>
+                        </div>
+
+                        {activeTab === 'overview' && (
+                        <>
                         {/* Streak */}
                         <div className="streak-block">
                             <div className="streak-fire">🔥</div>
@@ -1188,6 +1623,20 @@
                                     </div>
                                 )}
                             </div>
+                        )}
+                        </>
+                        )}
+
+                        {activeTab === 'calendar' && (
+                            loading ? (
+                                <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
+                                    <div className="spinner" style={{ margin: '0 auto' }}></div>
+                                </div>
+                            ) : (
+                                <div style={{ paddingTop: '12px' }}>
+                                    <HabitCalendar logs={logs} habitName={habit.name} />
+                                </div>
+                            )
                         )}
 
                         <div className="modal-footer">

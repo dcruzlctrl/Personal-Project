@@ -33,8 +33,8 @@ function App() {
                     {view !== 'projects' && (
                         <button className="nav-link" onClick={() => setView('projects')}>← Projects</button>
                     )}
-                    <a href="habits.html" target="_blank" rel="noopener noreferrer" className="nav-link">🎯 Habits</a>
-                    <a href="crossword.html" target="_blank" rel="noopener noreferrer" className="nav-link">🧩 Crossword</a>
+                    <a href="habits.html" className="nav-link">🎯 Habits</a>
+                    <a href="crossword.html" className="nav-link">🧩 Crossword</a>
                     <button className="nav-link-danger" onClick={handleLogout}>Sign out</button>
                 </div>
             </nav>
@@ -59,7 +59,9 @@ function ProjectsView({ user, onSelectProject }) {
     const [projects, setProjects]           = React.useState([]);
     const [loading, setLoading]             = React.useState(true);
     const [showNewModal, setShowNewModal]   = React.useState(false);
-    const [projectSortBy, setProjectSortBy] = React.useState('created');
+    const [projectSortBy, setProjectSortBy] = React.useState(() => {
+        return localStorage.getItem('projectSortBy') || 'created';
+    });
     const [stats, setStats] = React.useState({
         activeProjects: 0, totalTasks: 0,
         pendingTasks: 0, inProgressTasks: 0,
@@ -67,6 +69,10 @@ function ProjectsView({ user, onSelectProject }) {
     });
 
     React.useEffect(() => { loadProjects(); }, []);
+
+    React.useEffect(() => {
+        localStorage.setItem('projectSortBy', projectSortBy);
+    }, [projectSortBy]);
 
     const loadProjects = async () => {
         try {

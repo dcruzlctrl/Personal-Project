@@ -119,7 +119,9 @@ function HabitsView({ user }) {
     const [loading, setLoading]       = React.useState(true);
     const [newHabitName, setNewHabitName] = React.useState('');
     const [selectedHabit, setSelectedHabit] = React.useState(null);
-    const [habitSortBy, setHabitSortBy] = React.useState('created');
+    const [habitSortBy, setHabitSortBy] = React.useState(() => {
+        return localStorage.getItem('habitSortBy') || 'created';
+    });
     const [showMasterCalendar, setShowMasterCalendar] = React.useState(false);
 
     React.useEffect(() => {
@@ -127,6 +129,10 @@ function HabitsView({ user }) {
         const interval = setInterval(loadHabits, 60000);
         return () => clearInterval(interval);
     }, []);
+
+    React.useEffect(() => {
+        localStorage.setItem('habitSortBy', habitSortBy);
+    }, [habitSortBy]);
 
     const loadHabits = async () => {
         try {

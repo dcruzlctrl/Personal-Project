@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Crossword</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Home Screen -->
+<div id="home-screen">
+  <div style="text-align:center;">
+    <div class="home-eyebrow">AI-Powered</div>
+    <div class="home-title">CROSS<br>WORD</div>
+    <div class="home-subtitle">Pick a theme. We'll build the puzzle.</div>
+  </div>
+
+  <div class="theme-form">
+    <label class="theme-label" for="theme-input">Choose your theme</label>
+    <input
+      type="text"
+      id="theme-input"
+      class="theme-input"
+      placeholder="e.g. Space, NYC, 90s Movies, HVAC…"
+      maxlength="60"
+      autocomplete="off"
+    >
+    <div id="error-msg" class="error-msg hidden"></div>
+    <button id="generate-btn" class="generate-btn">Generate Puzzle →</button>
+  </div>
+
+  <div class="home-grid-deco" id="deco-grid"></div>
+</div>
+
+<!-- Loading Screen -->
+<div id="loading-screen" class="hidden">
+  <div class="loading-grid" id="loading-grid"></div>
+  <div class="loading-text">Constructing your puzzle<span class="loading-dots"></span></div>
+</div>
+
+<!-- Puzzle Screen -->
+<div id="puzzle-screen" class="hidden">
+  <div class="puz-header">
+    <div style="flex:1;min-width:0;">
+      <div class="puz-title">AI CROSSWORD</div>
+      <div class="puz-theme" id="theme-badge"></div>
+    </div>
+    <a href="../index.html" class="hdr-btn">← Dashboard</a>
+    <button class="hdr-btn primary" id="check-btn">Check</button>
+    <button class="hdr-btn" id="reveal-btn">Reveal</button>
+    <button class="hdr-btn" id="new-btn">New</button>
+  </div>
+
+  <div class="clue-bar" id="clue-bar">
+    <span class="clue-bar-text">Click a square to begin</span>
+  </div>
+
+  <div class="puz-body">
+    <div class="grid-col">
+      <div id="crossword-grid"></div>
+    </div>
+
+    <div class="clues-col">
+      <div class="clue-tabs">
+        <button class="clue-tab active" id="tab-across">Across</button>
+        <button class="clue-tab" id="tab-down">Down</button>
+      </div>
+      <div class="clues-list" id="across-list"></div>
+      <div class="clues-list hidden" id="down-list"></div>
+    </div>
+  </div>
+</div>
+
+<script src="state.js"></script>
+<script src="engine.js"></script>
+<script src="api.js"></script>
+<script src="ui.js"></script>
+<script src="interaction.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

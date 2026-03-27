@@ -1,0 +1,415 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F7F4EF;
+  --surface: #FFFFFF;
+  --ink: #1A1A1E;
+  --ink-mid: #4A4A52;
+  --ink-light: #8A8A95;
+  --accent: #1D3557;
+  --accent2: #457B9D;
+  --highlight: #A8C8DC;
+  --highlight-word: #DDE9F2;
+  --black-cell: #1A1A1E;
+  --correct-bg: #C6E8C6;
+  --incorrect-bg: #FAC8C8;
+  --border: #C8C4BC;
+  --cell-size: 38px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+/* HOME SCREEN */
+#home-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  gap: 2.5rem;
+  background: var(--bg);
+}
+
+.home-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  font-weight: 500;
+}
+
+.home-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(4rem, 12vw, 7rem);
+  font-weight: 900;
+  line-height: 0.9;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.home-subtitle {
+  font-size: 0.9rem;
+  color: var(--ink-light);
+  font-weight: 300;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.theme-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.theme-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  font-weight: 500;
+}
+
+.theme-input {
+  padding: 0.9rem 1.1rem;
+  font-size: 1rem;
+  font-family: 'DM Sans', sans-serif;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+  border-radius: 0;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.theme-input::placeholder { color: var(--ink-light); }
+.theme-input:focus { border-color: var(--accent); }
+
+.generate-btn {
+  padding: 0.9rem 1.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.1s;
+}
+.generate-btn:hover:not(:disabled) { opacity: 0.88; }
+.generate-btn:active:not(:disabled) { transform: scale(0.98); }
+.generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.error-msg {
+  font-size: 0.85rem;
+  color: #C62828;
+  min-height: 1.2em;
+}
+
+.home-grid-deco {
+  display: grid;
+  grid-template-columns: repeat(8, 18px);
+  grid-template-rows: repeat(4, 18px);
+  gap: 2px;
+  opacity: 0.18;
+}
+.deco-cell { background: var(--ink); }
+.deco-cell.empty { background: transparent; }
+
+/* LOADING SCREEN */
+#loading-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 26px);
+  grid-template-rows: repeat(5, 26px);
+  gap: 3px;
+}
+
+.loading-cell {
+  background: var(--border);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+.loading-cell.dark {
+  background: var(--black-cell);
+  animation: none;
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+
+.loading-text {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--ink-mid);
+}
+.loading-dots::after {
+  content: '';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots {
+  0%  { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+}
+
+/* PUZZLE SCREEN */
+#puzzle-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.puz-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+  border-bottom: 2px solid var(--ink);
+  flex-shrink: 0;
+}
+
+.puz-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.puz-theme {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+.hdr-btn {
+  padding: 0.42rem 0.85rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 2px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.hdr-btn:hover { background: var(--ink); color: var(--bg); }
+.hdr-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.hdr-btn.primary:hover { opacity: 0.85; }
+
+.clue-bar {
+  background: var(--accent);
+  color: white;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  flex-shrink: 0;
+  min-height: 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.clue-bar-num { font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.clue-bar-text { font-style: italic; }
+
+/* PUZZLE BODY */
+.puz-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.grid-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  overflow: auto;
+  flex-shrink: 0;
+}
+
+.clues-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid var(--ink);
+  overflow: hidden;
+  min-width: 180px;
+}
+
+.clue-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--ink);
+  flex-shrink: 0;
+}
+
+.clue-tab {
+  flex: 1;
+  padding: 0.55rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.clue-tab:last-child { border-right: none; }
+.clue-tab.active { background: var(--accent); color: white; }
+
+.clues-list {
+  overflow-y: auto;
+  padding: 0.3rem 0;
+  flex: 1;
+}
+
+.clue-item {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.42rem 0.75rem;
+  cursor: pointer;
+  border-radius: 3px;
+  align-items: flex-start;
+  transition: background 0.12s;
+  margin: 0 0.25rem;
+}
+.clue-item:hover { background: var(--highlight-word); }
+.clue-item.active { background: var(--highlight); }
+
+.clue-num {
+  font-weight: 700;
+  font-size: 0.78rem;
+  min-width: 1.6rem;
+  text-align: right;
+  flex-shrink: 0;
+  padding-top: 1px;
+  color: var(--ink);
+}
+.clue-text {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-mid);
+}
+.clue-item.active .clue-text { color: var(--ink); }
+
+/* GRID */
+#crossword-grid {
+  display: grid;
+  border: 2px solid var(--ink);
+}
+
+.cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border: 1px solid var(--border);
+  position: relative;
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cell.black {
+  background: var(--black-cell);
+  border-color: var(--black-cell);
+  cursor: default;
+  pointer-events: none;
+}
+
+.cell.selected { background: var(--highlight); }
+.cell.word-hl { background: var(--highlight-word); }
+.cell.correct { background: var(--correct-bg); }
+.cell.incorrect { background: var(--incorrect-bg); }
+
+.cell-num {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 9px;
+  line-height: 1;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  color: var(--ink);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cell-letter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: calc(var(--cell-size) * 0.52);
+  font-weight: 500;
+  color: var(--ink);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  :root { --cell-size: 30px; }
+
+  .puz-body { flex-direction: column; }
+
+  .grid-col {
+    flex-shrink: 0;
+    padding: 0.4rem;
+    justify-content: center;
+  }
+
+  .clues-col {
+    flex: 1;
+    border-left: none;
+    border-top: 2px solid var(--ink);
+    min-height: 0;
+  }
+}

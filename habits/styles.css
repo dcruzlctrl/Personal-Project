@@ -469,35 +469,41 @@
 /* ===== NOTE PROMPT (post-increment) ===== */
 .note-prompt {
     position: fixed;
-    bottom: 20px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    gap: 12px;
+    background: var(--accent);
+    border: 2px solid var(--accent-hover);
     border-radius: var(--radius);
-    padding: 10px 12px;
-    box-shadow: var(--shadow-xl);
+    padding: 12px 16px;
+    box-shadow: 0 12px 32px rgba(13, 148, 136, 0.25);
     z-index: 200;
-    max-width: 480px;
-    width: calc(100% - 32px);
-    animation: prompt-in 0.15s ease;
+    max-width: 500px;
+    width: calc(100% - 40px);
+    animation: prompt-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @keyframes prompt-in {
-    from { opacity: 0; transform: translateX(-50%) translateY(6px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    from { opacity: 0; transform: translateX(-50%) scale(0.92); }
+    to   { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 .note-prompt-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
     white-space: nowrap;
-    max-width: 100px;
+    max-width: 110px;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+.note-prompt-label::before {
+    content: '✏ ';
+    margin-right: 4px;
 }
 .note-prompt-input {
     flex: 1;
@@ -506,36 +512,42 @@
     font-size: 13px;
     font-family: var(--font);
     color: var(--text);
-    background: transparent;
+    background: white;
     min-width: 0;
+    padding: 6px 10px;
+    border-radius: var(--radius-xs);
 }
 .note-prompt-input::placeholder { color: var(--text-subtle); }
+.note-prompt-input:focus { outline: none; }
 .note-prompt-save {
-    padding: 5px 12px;
-    background: var(--accent);
-    color: white;
+    padding: 6px 14px;
+    background: white;
+    color: var(--accent);
     border: none;
     border-radius: var(--radius-sm);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     font-family: var(--font);
     flex-shrink: 0;
-    transition: background 0.15s;
+    transition: all 0.15s;
 }
-.note-prompt-save:hover:not(:disabled) { background: var(--accent-hover); }
-.note-prompt-save:disabled { opacity: 0.35; cursor: not-allowed; }
+.note-prompt-save:hover:not(:disabled) { background: #f0fdf9; transform: scale(1.05); }
+.note-prompt-save:active:not(:disabled) { transform: scale(0.98); }
+.note-prompt-save:disabled { opacity: 0.5; cursor: not-allowed; }
 .note-prompt-dismiss {
-    background: none;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
     cursor: pointer;
-    font-size: 11px;
-    color: var(--text-subtle);
-    padding: 0;
+    font-size: 12px;
+    color: white;
+    padding: 4px 8px;
     flex-shrink: 0;
     line-height: 1;
+    border-radius: var(--radius-xs);
+    transition: background 0.15s;
 }
-.note-prompt-dismiss:hover { color: var(--text); }
+.note-prompt-dismiss:hover { background: rgba(255, 255, 255, 0.3); }
 
 /* ===== NOTES ===== */
 .notes-badge {

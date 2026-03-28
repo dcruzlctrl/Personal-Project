@@ -91,7 +91,7 @@ function getStreakDateSet(logs) {
 }
 
 // ===== CALENDAR COMPONENTS =====
-function CalendarGrid({ year, month, dayMap, maxVal, streakDates, today, onPrev, onNext }) {
+function CalendarGrid({ year, month, dayMap, maxVal, streakDates, today, onPrev, onNext, onDayClick, selectedDay }) {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const dowNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     const firstDay = new Date(year, month, 1).getDay();
@@ -149,14 +149,18 @@ function CalendarGrid({ year, month, dayMap, maxVal, streakDates, today, onPrev,
                     if (cell.type === 'pad') return <div key={`pad-${rowIdx}`} className="cal-day cal-day--pad"></div>;
                     const isStreak = streakDates.has(cell.date);
                     const isToday = cell.date === today;
+                    const hasActivity = (dayMap[cell.date] ?? 0) > 0;
+                    const isSelected = cell.date === selectedDay;
+                    const isClickable = onDayClick && hasActivity;
                     return (
                         <div
                             key={cell.date}
-                            className={`cal-day ${isStreak ? 'cal-day--streak' : ''} ${isToday ? 'cal-day--today' : ''}`}
+                            className={`cal-day ${isStreak ? 'cal-day--streak' : ''} ${isToday ? 'cal-day--today' : ''} ${isClickable ? 'cal-day--clickable' : ''} ${isSelected ? 'cal-day--selected' : ''}`}
                             style={{
                                 background: isStreak ? '#a7f3d0' : getHeatColor(cell.date),
                                 borderRadius: getStreakRadii(cell, rowIdx)
                             }}
+                            onClick={() => isClickable && onDayClick(cell.date)}
                         >
                             <span className="cal-day-num" style={{ color: isStreak ? 'var(--accent)' : getTextColor(cell.date) }}>
                                 {cell.day}
@@ -199,32 +203,62 @@ function CalendarStats({ year, month, dayMap, label }) {
     );
 }
 
-function HabitCalendar({ logs, habitName }) {
+function HabitDayDetail({ date, logs, onClose }) {
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const [y, m, d] = date.split('-').map(Number);
+    const label = `${monthNames[m - 1]} ${d}, ${y}`;
+    const total = logs.reduce((s, l) => s + l.change, 0);
+    const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: true
+    });
+    return (
+        <div className="day-detail">
+            <div className="day-detail-head">
+                <span className="day-detail-title">{label}</span>
+                <button className="day-detail-close" onClick={onClose}>✕</button>
+            </div>
+            <div className="day-detail-list">
+                {logs.map((log, i) => (
+                    <div key={i} className="day-detail-row">
+                        <span className="day-detail-time">{fmt.format(new Date(log.timestamp))}</span>
+                        <span className={log.change > 0 ? 'history-pos' : 'history-neg'}>
+                            {log.change > 0 ? '+' : ''}{log.change}
+                        </span>
+                    </div>
+                ))}
+            </div>
+            <div className="day-detail-footer">Total: {total}</div>
+        </div>
+    );
+}
+
+function HabitCalendar({ logs }) {
     const today = getNYCDate();
     const [viewYear, setViewYear] = React.useState(parseInt(today.substring(0, 4)));
     const [viewMonth, setViewMonth] = React.useState(parseInt(today.substring(5, 7)) - 1);
+    const [selectedDay, setSelectedDay] = React.useState(null);
 
     const dayMap = buildDayMap(logs, viewYear, viewMonth);
     const maxVal = Math.max(0, ...Object.values(dayMap));
     const streakDates = getStreakDateSet(logs);
 
     const handlePrev = () => {
-        if (viewMonth === 0) {
-            setViewMonth(11);
-            setViewYear(viewYear - 1);
-        } else {
-            setViewMonth(viewMonth - 1);
-        }
+        setSelectedDay(null);
+        if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+        else setViewMonth(viewMonth - 1);
     };
 
     const handleNext = () => {
-        if (viewMonth === 11) {
-            setViewMonth(0);
-            setViewYear(viewYear + 1);
-        } else {
-            setViewMonth(viewMonth + 1);
-        }
+        setSelectedDay(null);
+        if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+        else setViewMonth(viewMonth + 1);
     };
+
+    const dayLogs = selectedDay
+        ? logs
+            .filter(l => getNYCDateFromDate(new Date(l.timestamp)) === selectedDay && l.change !== 0)
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        : [];
 
     return (
         <div>
@@ -237,8 +271,17 @@ function HabitCalendar({ logs, habitName }) {
                 today={today}
                 onPrev={handlePrev}
                 onNext={handleNext}
+                onDayClick={setSelectedDay}
+                selectedDay={selectedDay}
             />
             <CalendarStats year={viewYear} month={viewMonth} dayMap={dayMap} label="actions" />
+            {selectedDay && (
+                <HabitDayDetail
+                    date={selectedDay}
+                    logs={dayLogs}
+                    onClose={() => setSelectedDay(null)}
+                />
+            )}
         </div>
     );
 }

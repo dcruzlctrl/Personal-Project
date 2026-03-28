@@ -2,6 +2,7 @@
 function MasterCalendarModal({ userId, habits, onClose }) {
     const [allLogs, setAllLogs] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [selectedDay, setSelectedDay] = React.useState(null);
     const today = getNYCDate();
     const [viewYear, setViewYear] = React.useState(parseInt(today.substring(0, 4)));
     const [viewMonth, setViewMonth] = React.useState(parseInt(today.substring(5, 7)) - 1);
@@ -55,21 +56,28 @@ function MasterCalendarModal({ userId, habits, onClose }) {
     const maxVal = Math.max(0, ...Object.values(masterDayMap), habits.length);
 
     const handlePrev = () => {
-        if (viewMonth === 0) {
-            setViewMonth(11);
-            setViewYear(viewYear - 1);
-        } else {
-            setViewMonth(viewMonth - 1);
-        }
+        setSelectedDay(null);
+        if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+        else setViewMonth(viewMonth - 1);
     };
 
     const handleNext = () => {
-        if (viewMonth === 11) {
-            setViewMonth(0);
-            setViewYear(viewYear + 1);
-        } else {
-            setViewMonth(viewMonth + 1);
-        }
+        setSelectedDay(null);
+        if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+        else setViewMonth(viewMonth + 1);
+    };
+
+    const getMasterDayDetail = (date) => {
+        const habitMap = {};
+        (allLogs || []).forEach(log => {
+            if (getNYCDateFromDate(new Date(log.timestamp)) === date && log.change > 0) {
+                habitMap[log.habit_id] = (habitMap[log.habit_id] || 0) + log.change;
+            }
+        });
+        return Object.entries(habitMap).map(([id, count]) => ({
+            name: habits.find(h => h.id === id)?.name || 'Unknown',
+            count
+        })).sort((a, b) => b.count - a.count);
     };
 
     return (
@@ -95,6 +103,8 @@ function MasterCalendarModal({ userId, habits, onClose }) {
                             today={today}
                             onPrev={handlePrev}
                             onNext={handleNext}
+                            onDayClick={setSelectedDay}
+                            selectedDay={selectedDay}
                         />
                         <CalendarStats
                             year={viewYear}
@@ -102,6 +112,28 @@ function MasterCalendarModal({ userId, habits, onClose }) {
                             dayMap={masterDayMap}
                             label="habits"
                         />
+                        {selectedDay && (() => {
+                            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            const [y, m, d] = selectedDay.split('-').map(Number);
+                            const entries = getMasterDayDetail(selectedDay);
+                            return (
+                                <div className="day-detail">
+                                    <div className="day-detail-head">
+                                        <span className="day-detail-title">{monthNames[m - 1]} {d}, {y}</span>
+                                        <button className="day-detail-close" onClick={() => setSelectedDay(null)}>✕</button>
+                                    </div>
+                                    <div className="day-detail-list">
+                                        {entries.map((e, i) => (
+                                            <div key={i} className="day-detail-row">
+                                                <span className="day-detail-habit">{e.name}</span>
+                                                <span className="history-pos">×{e.count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="day-detail-footer">{entries.length} habit{entries.length !== 1 ? 's' : ''} active</div>
+                                </div>
+                            );
+                        })()}
                     </>
                 )}
 

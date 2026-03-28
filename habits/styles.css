@@ -466,6 +466,105 @@
 .cal-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
 .cal-stat-val { font-size: 18px; font-weight: 800; font-family: var(--font-mono); color: var(--accent); }
 
+/* ===== NOTES ===== */
+.notes-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 99px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+.note-compose {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+.note-input {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    resize: none;
+    outline: none;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.15s;
+    line-height: 1.5;
+}
+.note-input::placeholder { color: var(--text-subtle); }
+.note-input:focus { border-color: var(--accent); }
+.note-save-btn {
+    padding: 10px 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: background 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.note-save-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.note-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.note-item {
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-light);
+}
+.note-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 6px;
+}
+.note-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.note-time {
+    font-size: 11px;
+    color: var(--text-subtle);
+    font-weight: 500;
+}
+.note-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--text-subtle);
+    padding: 0;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+.note-delete:hover { opacity: 1; color: var(--danger); }
+
 /* ===== MODAL FOOTER ===== */
 .modal-footer {
     display: flex;

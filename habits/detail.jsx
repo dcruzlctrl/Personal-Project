@@ -6,9 +6,12 @@ function HabitDetailModal({ habit, onClose, onRefresh }) {
     const [streaks, setStreaks]     = React.useState({ currentStreak: 0, longestStreak: 0 });
     const [resetDaily, setResetDaily] = React.useState(habit.reset_daily);
     const [activeTab, setActiveTab] = React.useState('overview');
+    const [notes, setNotes]         = React.useState([]);
+    const [newNote, setNewNote]     = React.useState('');
+    const [savingNote, setSavingNote] = React.useState(false);
 
     React.useEffect(() => { setResetDaily(habit.reset_daily); }, [habit.reset_daily]);
-    React.useEffect(() => { loadLogs(); }, [habit.id]);
+    React.useEffect(() => { loadLogs(); loadNotes(); }, [habit.id]);
 
     const loadLogs = async () => {
         try {
@@ -23,6 +26,44 @@ function HabitDetailModal({ habit, onClose, onRefresh }) {
             setStreaks(streakData);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
+    };
+
+    const [notesTableMissing, setNotesTableMissing] = React.useState(false);
+
+    const loadNotes = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('habit_notes').select('*')
+                .eq('habit_id', habit.id)
+                .order('created_at', { ascending: false });
+            if (error) {
+                if (error.code === '42P01') { setNotesTableMissing(true); return; } // table doesn't exist
+                throw error;
+            }
+            setNotes(data || []);
+        } catch (err) { console.error(err); }
+    };
+
+    const handleAddNote = async () => {
+        if (!newNote.trim() || notesTableMissing) return;
+        setSavingNote(true);
+        try {
+            const { error } = await supabase.from('habit_notes').insert({
+                habit_id: habit.id,
+                note: newNote.trim()
+            });
+            if (error) throw error;
+            setNewNote('');
+            loadNotes();
+        } catch (err) { console.error(err); }
+        finally { setSavingNote(false); }
+    };
+
+    const handleDeleteNote = async (noteId) => {
+        try {
+            await supabase.from('habit_notes').delete().eq('id', noteId);
+            setNotes(prev => prev.filter(n => n.id !== noteId));
+        } catch (err) { console.error(err); }
     };
 
     const handleToggleReset = async () => {
@@ -71,14 +112,16 @@ function HabitDetailModal({ habit, onClose, onRefresh }) {
                     <button
                         className={`modal-tab ${activeTab === 'overview' ? 'modal-tab--active' : ''}`}
                         onClick={() => setActiveTab('overview')}
-                    >
-                        Overview
-                    </button>
+                    >Overview</button>
                     <button
                         className={`modal-tab ${activeTab === 'calendar' ? 'modal-tab--active' : ''}`}
                         onClick={() => setActiveTab('calendar')}
+                    >Calendar</button>
+                    <button
+                        className={`modal-tab ${activeTab === 'notes' ? 'modal-tab--active' : ''}`}
+                        onClick={() => setActiveTab('notes')}
                     >
-                        Calendar
+                        Notes {notes.length > 0 && <span className="notes-badge">{notes.length}</span>}
                     </button>
                 </div>
 
@@ -167,6 +210,59 @@ function HabitDetailModal({ habit, onClose, onRefresh }) {
                     </div>
                 )}
                 </>
+                )}
+
+                {activeTab === 'notes' && (
+                    <div style={{ paddingTop: '4px' }}>
+                        {notesTableMissing && (
+                            <div style={{ background: 'var(--warning-light)', border: '1px solid var(--amber)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', marginBottom: '12px', fontSize: '12px', color: 'var(--warning)' }}>
+                                Run this in Supabase SQL editor to enable notes:<br />
+                                <code style={{ display: 'block', marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '11px', whiteSpace: 'pre-wrap', color: 'var(--text)' }}>{`create table habit_notes (\n  id uuid default gen_random_uuid() primary key,\n  habit_id uuid references habits(id) on delete cascade,\n  note text not null,\n  created_at timestamptz default now()\n);`}</code>
+                            </div>
+                        )}
+                        <div className="note-compose">
+                            <textarea
+                                className="note-input"
+                                placeholder="Add a note…"
+                                value={newNote}
+                                onChange={e => setNewNote(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote(); }}
+                                rows={3}
+                            />
+                            <button
+                                className="note-save-btn"
+                                onClick={handleAddNote}
+                                disabled={savingNote || !newNote.trim() || notesTableMissing}
+                            >
+                                {savingNote ? '…' : 'Save'}
+                            </button>
+                        </div>
+
+                        {notes.length === 0 ? (
+                            <div style={{ color: 'var(--text-subtle)', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>
+                                No notes yet
+                            </div>
+                        ) : (
+                            <div className="notes-list">
+                                {notes.map(n => {
+                                    const fmt = new Intl.DateTimeFormat('en-US', {
+                                        timeZone: 'America/New_York',
+                                        month: 'short', day: 'numeric',
+                                        hour: '2-digit', minute: '2-digit', hour12: true
+                                    });
+                                    return (
+                                        <div key={n.id} className="note-item">
+                                            <div className="note-text">{n.note}</div>
+                                            <div className="note-meta">
+                                                <span className="note-time">{fmt.format(new Date(n.created_at))}</span>
+                                                <button className="note-delete" onClick={() => handleDeleteNote(n.id)}>✕</button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {activeTab === 'calendar' && (

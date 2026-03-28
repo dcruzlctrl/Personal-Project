@@ -155,6 +155,38 @@ function HabitsView({ user }) {
         return localStorage.getItem('habitSortBy') || 'created';
     });
     const [showMasterCalendar, setShowMasterCalendar] = React.useState(false);
+    const [pendingNote, setPendingNote]   = React.useState(null); // { habitId, habitName }
+    const [noteText, setNoteText]         = React.useState('');
+    const dismissTimer                    = React.useRef(null);
+
+    const dismissNote = () => {
+        clearTimeout(dismissTimer.current);
+        setPendingNote(null);
+        setNoteText('');
+    };
+
+    const startDismissTimer = () => {
+        clearTimeout(dismissTimer.current);
+        dismissTimer.current = setTimeout(dismissNote, 8000);
+    };
+
+    React.useEffect(() => {
+        if (!pendingNote) return;
+        startDismissTimer();
+        const onKey = (e) => { if (e.key === 'Escape') dismissNote(); };
+        window.addEventListener('keydown', onKey);
+        return () => { clearTimeout(dismissTimer.current); window.removeEventListener('keydown', onKey); };
+    }, [pendingNote]);
+
+    const handleSaveNote = async () => {
+        if (!noteText.trim() || !pendingNote) return;
+        try {
+            await supabase.from('habit_notes').insert({
+                habit_id: pendingNote.habitId, note: noteText.trim()
+            });
+        } catch (err) { console.error(err); }
+        dismissNote();
+    };
 
     React.useEffect(() => {
         loadHabits();
@@ -224,6 +256,8 @@ function HabitsView({ user }) {
                 timestamp: new Date().toISOString()
             });
             loadHabits();
+            setNoteText('');
+            setPendingNote({ habitId, habitName: habit.name });
         } catch (err) { console.error(err); }
     };
 
@@ -308,7 +342,7 @@ function HabitsView({ user }) {
             ) : (
                 <div>
                     {getSortedHabits().map(habit => (
-                        <div key={habit.id} className="habit-card" onClick={() => setSelectedHabit(habit)}>
+                        <div key={habit.id} className="habit-card" onClick={() => { dismissNote(); setSelectedHabit(habit); }}>
                             <div className="habit-row">
                                 <div className="habit-name">
                                     {habit.name}
@@ -345,6 +379,23 @@ function HabitsView({ user }) {
                     habits={habits}
                     onClose={() => setShowMasterCalendar(false)}
                 />
+            )}
+
+            {pendingNote && (
+                <div className="note-prompt">
+                    <span className="note-prompt-label">{pendingNote.habitName}</span>
+                    <input
+                        className="note-prompt-input"
+                        type="text"
+                        placeholder="Add a note…"
+                        value={noteText}
+                        autoFocus
+                        onChange={e => { clearTimeout(dismissTimer.current); setNoteText(e.target.value); }}
+                        onKeyDown={e => { if (e.key === 'Enter') handleSaveNote(); if (e.key === 'Escape') dismissNote(); }}
+                    />
+                    <button className="note-prompt-save" onClick={handleSaveNote} disabled={!noteText.trim()}>Save</button>
+                    <button className="note-prompt-dismiss" onClick={dismissNote}>✕</button>
+                </div>
             )}
         </>
     );

@@ -466,6 +466,77 @@
 .cal-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
 .cal-stat-val { font-size: 18px; font-weight: 800; font-family: var(--font-mono); color: var(--accent); }
 
+/* ===== NOTE PROMPT (post-increment) ===== */
+.note-prompt {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    box-shadow: var(--shadow-xl);
+    z-index: 200;
+    max-width: 480px;
+    width: calc(100% - 32px);
+    animation: prompt-in 0.15s ease;
+}
+@keyframes prompt-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.note-prompt-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+}
+.note-prompt-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text);
+    background: transparent;
+    min-width: 0;
+}
+.note-prompt-input::placeholder { color: var(--text-subtle); }
+.note-prompt-save {
+    padding: 5px 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.note-prompt-save:hover:not(:disabled) { background: var(--accent-hover); }
+.note-prompt-save:disabled { opacity: 0.35; cursor: not-allowed; }
+.note-prompt-dismiss {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--text-subtle);
+    padding: 0;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.note-prompt-dismiss:hover { color: var(--text); }
+
 /* ===== NOTES ===== */
 .notes-badge {
     display: inline-flex;

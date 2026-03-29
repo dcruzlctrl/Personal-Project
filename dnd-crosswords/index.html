@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>D&D Crossword</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     SELECT SCREEN
+════════════════════════════════════════════════════ -->
+<div id="select-screen" class="screen active">
+  <div class="select-title">⚔️ D&D Crossword</div>
+  <div class="select-subtitle">Swipe to connect letters • Fill the grid</div>
+  <div id="puzzle-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     GAME SCREEN
+════════════════════════════════════════════════════ -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <button class="back-btn" id="back-btn">‹</button>
+    <div class="header-center">
+      <div class="header-theme" id="header-theme"></div>
+      <div class="progress-dots" id="progress-dots"></div>
+    </div>
+    <button class="solve-btn" id="solve-btn" title="Auto-solve">⚡</button>
+  </div>
+
+  <div class="grid-wrapper">
+    <div id="crossword-grid"></div>
+  </div>
+
+  <div class="hint-line">
+    <div class="hint-text" id="hint-text">Tap the grid to get a hint</div>
+  </div>
+
+  <div class="swipe-preview" id="swipe-preview"></div>
+
+  <div class="mode-toggle">
+    <div class="mode-btn">
+      <div class="mode-opt active" id="mode-swipe">Swipe</div>
+      <div class="mode-opt" id="mode-tap">Tap</div>
+    </div>
+  </div>
+
+  <div class="letter-circle-area">
+    <svg id="letter-svg"></svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     COMPLETE OVERLAY
+════════════════════════════════════════════════════ -->
+<div id="complete-overlay">
+  <div class="complete-emoji">🎉</div>
+  <div class="complete-title">Puzzle Complete!</div>
+  <div class="complete-sub" id="complete-sub"></div>
+  <div class="complete-words" id="complete-words"></div>
+  <button class="next-btn" id="next-btn">Next Puzzle →</button>
+</div>
+
+<!-- Scripts load in dependency order -->
+<script src="audio.js"></script>
+<script src="grid-engine.js"></script>
+<script src="letter-circle.js"></script>
+<script src="select-screen.js"></script>
+<script src="game.js"></script>
+
+</body>
+</html>

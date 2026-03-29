@@ -35,6 +35,7 @@ function App() {
                     )}
                     <a href="habits.html" className="nav-link">🎯 Habits</a>
                     <a href="crossword.html" className="nav-link">🧩 Crossword</a>
+                    <a href="dnd-crosswords/index.html" className="nav-link">🐉 D&D Crossword</a>
                     <button className="nav-link-danger" onClick={handleLogout}>Sign out</button>
                 </div>
             </nav>

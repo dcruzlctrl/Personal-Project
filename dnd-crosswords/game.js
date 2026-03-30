@@ -2,6 +2,7 @@
 // GAME STATE — variables shared across all modules
 // ═══════════════════════════════════════════════════
 let DB           = [];       // all puzzles loaded from dnd-jam-db.json
+let BACKGROUNDS  = {};       // theme -> background image URL mapping
 let puzzle       = null;     // current puzzle object
 let layout       = null;     // { cells, placements, rows, cols } from buildGrid()
 let found        = new Set(); // words the player has found so far
@@ -34,6 +35,9 @@ function startPuzzle(idx) {
   document.getElementById('header-theme').textContent = puzzle.display_theme;
   document.getElementById('mode-swipe').classList.add('active');
   document.getElementById('mode-tap').classList.remove('active');
+
+  // Apply background image for this theme
+  applyThemeBackground(puzzle.display_theme);
 
   renderProgressDots();
   renderGrid();
@@ -343,4 +347,30 @@ async function init() {
   renderSelectScreen();
 }
 
-init();
+// ═══════════════════════════════════════════════════
+// BACKGROUNDS — load and apply theme-specific images
+// ═══════════════════════════════════════════════════
+async function loadBackgrounds() {
+  try {
+    const response = await fetch('theme-backgrounds.json');
+    const data = await response.json();
+    BACKGROUNDS = data.backgrounds;
+  } catch (e) {
+    console.warn('Could not load theme backgrounds:', e);
+    BACKGROUNDS = {};
+  }
+}
+
+function applyThemeBackground(theme) {
+  const wrapper = document.querySelector('.grid-wrapper');
+  const bgUrl = BACKGROUNDS[theme];
+
+  if (bgUrl) {
+    wrapper.style.backgroundImage = `url('${bgUrl}')`;
+  } else {
+    wrapper.style.backgroundImage = 'none';
+  }
+}
+
+// Load backgrounds and initialize
+loadBackgrounds().then(() => init());

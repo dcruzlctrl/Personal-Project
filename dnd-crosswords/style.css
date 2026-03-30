@@ -138,6 +138,17 @@ body {
   align-items: center;
   justify-content: center;
   padding: 12px;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+}
+.grid-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }
 @media (max-width: 480px) {
   .grid-wrapper { height: 200px; }
@@ -148,6 +159,8 @@ body {
 #crossword-grid {
   display: grid;
   gap: 3px;
+  position: relative;
+  z-index: 1;
 }
 .grid-tile {
   border-radius: 6px;

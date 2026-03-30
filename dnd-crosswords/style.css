@@ -133,11 +133,17 @@ body {
 /* ── GRID ── */
 .grid-wrapper {
   flex: 0 0 auto;
-  height: 300px;
+  height: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 12px;
+}
+@media (max-width: 480px) {
+  .grid-wrapper { height: 200px; }
+}
+@media (min-width: 768px) {
+  .grid-wrapper { height: 300px; }
 }
 #crossword-grid {
   display: grid;
@@ -167,6 +173,10 @@ body {
   align-items: center;
   justify-content: center;
   padding: 4px 0 0;
+  min-height: 40px;
+}
+@media (max-width: 480px) {
+  .mode-toggle { padding: 2px 0 0; min-height: 36px; }
 }
 .mode-btn {
   background: var(--surface);
@@ -195,13 +205,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 20px;
+  padding: 0 12px;
+  min-height: 28px;
+}
+@media (max-width: 480px) {
+  .hint-line { height: 28px; padding: 0 8px; }
 }
 .hint-text {
   font-size: 13px;
   color: var(--muted);
   text-align: center;
   font-style: italic;
+  line-height: 1.2;
+  word-break: break-word;
+}
+@media (max-width: 480px) {
+  .hint-text { font-size: 12px; }
 }
 .hint-text span { color: var(--accent2); font-style: normal; font-weight: 600; }
 
@@ -213,6 +232,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 3px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+@media (max-width: 480px) {
+  .swipe-preview { height: 32px; }
 }
 .preview-letter {
   min-width: 28px;
@@ -243,6 +267,10 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0 0 12px;
+  min-height: 200px;
+}
+@media (max-width: 480px) {
+  .letter-circle-area { padding: 0 0 8px; min-height: 160px; }
 }
 #letter-svg { overflow: visible; }
 .letter-node circle {

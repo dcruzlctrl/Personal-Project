@@ -73,7 +73,7 @@
       "BLIND": "Blind as a bat, but still see danger.",
       "STUN": "Stun the foe, silence their screams for a moment.",
       "MUTE": "Mute your voice; enemies hear only your footsteps.",
-      "HEX": "Hex your enemy's luck\u2014turn fate into foul play."
+      "HEX": "Hex your enemy's luck—turn fate into foul play."
     }
   },
   {
@@ -183,9 +183,9 @@
     "model": "openai-20b",
     "hints": {
       "FOUR": "Fortune favors the bold, roll four times!",
-      "SIX": "Six\u2011sided dice summon spectral shadows.",
+      "SIX": "Six‑sided dice summon spectral shadows.",
       "EIGHT": "Eight echoes echo through enchanted halls.",
-      "TWENTY": "Twenty\u2011sided fate twists with every turn.",
+      "TWENTY": "Twenty‑sided fate twists with every turn.",
       "ROLL": "Roll boldly, brave bard, destiny awaits!"
     }
   },
@@ -641,16 +641,7 @@
     ],
     "word_count": 7,
     "generated": "2026-03-29T19:11:11.012293",
-    "model": "openai-20b",
-    "hints": {
-      "MAGIC": "Mystic arts that bend reality's very fabric.",
-      "SPELL": "Summon a silent spell to silence foes.",
-      "RUNE": "Runic symbols inscribe power into stone.",
-      "CURSE": "Cursed chains chain the cursed, causing chaos.",
-      "OMEN": "Ominous omens often open ominously.",
-      "WARD": "Ward wards warding wizards' weak walls.",
-      "CHARM": "Charming charms charm champions, charmingly."
-    }
+    "model": "openai-20b"
   },
   {
     "id": "d_d_common_monsters_medium_1",
@@ -1081,5 +1072,928 @@
     "word_count": 9,
     "generated": "2026-03-29T18:59:46.563454",
     "model": "openai-20b"
+  },
+  {
+    "id": "ufc_easy_1",
+    "theme": "UFC",
+    "display_theme": "UFC",
+    "difficulty": "easy",
+    "words": [
+      "JUDO",
+      "DODGE",
+      "EDGE",
+      "DOJO",
+      "JUDGE"
+    ],
+    "letter_pool": [
+      "J",
+      "U",
+      "D",
+      "O",
+      "G",
+      "E"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "JUDO": "Japanese throwing martial art using leverage",
+      "DODGE": "Move your body to avoid a strike",
+      "EDGE": "Slim advantage one fighter holds over another",
+      "DOJO": "Training hall where martial arts are practiced",
+      "JUDGE": "Scores the fight if it goes to decision"
+    }
+  },
+  {
+    "id": "ufc_easy_2",
+    "theme": "UFC",
+    "display_theme": "UFC",
+    "difficulty": "easy",
+    "words": [
+      "KICK",
+      "CHIN",
+      "NICK",
+      "LINK",
+      "LOCK"
+    ],
+    "letter_pool": [
+      "K",
+      "I",
+      "C",
+      "H",
+      "N",
+      "L",
+      "O"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "KICK": "Strike thrown with the foot or shin",
+      "CHIN": "Target that can cause a knockout when hit",
+      "NICK": "Small cut opened up above the eye",
+      "LINK": "Connect strikes together into combinations",
+      "LOCK": "Submission technique immobilizing a joint"
+    }
+  },
+  {
+    "id": "ufc_medium_1",
+    "theme": "UFC",
+    "display_theme": "UFC",
+    "difficulty": "medium",
+    "words": [
+      "GUARD",
+      "DRAG",
+      "DRUG",
+      "GRAD",
+      "DURA"
+    ],
+    "letter_pool": [
+      "G",
+      "U",
+      "A",
+      "R",
+      "D"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "GUARD": "Defensive position protecting face and body",
+      "DRAG": "Pull opponent off balance to create opening",
+      "DRUG": "Banned performance-enhancing substances tested for",
+      "GRAD": "Gradual pressure applied in a submission hold",
+      "DURA": "Tough membrane protecting brain from impact"
+    }
+  },
+  {
+    "id": "ufc_medium_2",
+    "theme": "UFC",
+    "display_theme": "UFC",
+    "difficulty": "medium",
+    "words": [
+      "BLOCK",
+      "CLOCK",
+      "KNOCK",
+      "ROCK",
+      "LOCK"
+    ],
+    "letter_pool": [
+      "B",
+      "L",
+      "O",
+      "C",
+      "K",
+      "R",
+      "N"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "BLOCK": "Intercepting a strike before it lands",
+      "CLOCK": "Running out the timer in a round",
+      "KNOCK": "Staggering an opponent with a powerful blow",
+      "ROCK": "Dropping an opponent close to a finish",
+      "LOCK": "Submission technique controlling a joint"
+    }
+  },
+  {
+    "id": "ufc_hard_1",
+    "theme": "UFC",
+    "display_theme": "UFC",
+    "difficulty": "hard",
+    "words": [
+      "STANCE",
+      "TRANCE",
+      "CASTE",
+      "SCANT",
+      "CENTS"
+    ],
+    "letter_pool": [
+      "S",
+      "T",
+      "A",
+      "N",
+      "C",
+      "E",
+      "R"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "STANCE": "Fighter's posture and foot positioning in the cage",
+      "TRANCE": "Focused mental state before entering the octagon",
+      "CASTE": "Ranking hierarchy among fighters in a gym",
+      "SCANT": "Barely enough time left on the clock",
+      "CENTS": "Every small detail counts toward winning a decision"
+    }
+  },
+  {
+    "id": "ufc_hard_2",
+    "theme": "UFC",
+    "display_theme": "UFC",
+    "difficulty": "hard",
+    "words": [
+      "REIGN",
+      "RING",
+      "GRIN",
+      "REIN",
+      "RINGER"
+    ],
+    "letter_pool": [
+      "R",
+      "E",
+      "I",
+      "G",
+      "N"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "REIGN": "Champion's dominant run at the top of a division",
+      "RING": "Enclosed square used in boxing and kickboxing",
+      "GRIN": "Smiling through pain to show mental toughness",
+      "REIN": "Control over the pace and distance of a fight",
+      "RINGER": "Surprise elite competitor brought into a gym to spar"
+    }
+  },
+  {
+    "id": "nba_easy_1",
+    "theme": "NBA",
+    "display_theme": "NBA",
+    "difficulty": "easy",
+    "words": [
+      "DUNK",
+      "DUNE",
+      "NUDE",
+      "DUKE",
+      "DUNN"
+    ],
+    "letter_pool": [
+      "D",
+      "U",
+      "N",
+      "K",
+      "E"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "DUNK": "Slamming the ball through the rim with force",
+      "DUNE": "Sand hill — terrain opposite of a hardwood floor",
+      "NUDE": "Nothing on — like a bare bench with zero stats",
+      "DUKE": "Blue Devil school famous for basketball talent",
+      "DUNN": "Tim Dunn — one of many bigs known for power inside"
+    }
+  },
+  {
+    "id": "nba_easy_2",
+    "theme": "NBA",
+    "display_theme": "NBA",
+    "difficulty": "easy",
+    "words": [
+      "PASS",
+      "SPAN",
+      "SNAP",
+      "PANS",
+      "NAPS"
+    ],
+    "letter_pool": [
+      "P",
+      "A",
+      "S",
+      "N"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "PASS": "Moving the ball to a teammate to create a better shot",
+      "SPAN": "Length of a player's wingspan measured at the combine",
+      "SNAP": "Quick catch-and-shoot motion before defender closes out",
+      "PANS": "Camera follows the action up and down the court",
+      "NAPS": "Rest taken by players between games on back-to-backs"
+    }
+  },
+  {
+    "id": "nba_medium_1",
+    "theme": "NBA",
+    "display_theme": "NBA",
+    "difficulty": "medium",
+    "words": [
+      "SCREEN",
+      "CENTER",
+      "ENTER",
+      "RECENT",
+      "SCENE"
+    ],
+    "letter_pool": [
+      "S",
+      "C",
+      "R",
+      "E",
+      "N",
+      "T"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "SCREEN": "Legal block set to free up a teammate for a shot",
+      "CENTER": "Tallest position anchoring the paint and rim",
+      "ENTER": "Checking in at the scorer's table to join the game",
+      "RECENT": "Latest game film studied by the coaching staff",
+      "SCENE": "Moment that defines a playoff series highlight reel"
+    }
+  },
+  {
+    "id": "nba_medium_2",
+    "theme": "NBA",
+    "display_theme": "NBA",
+    "difficulty": "medium",
+    "words": [
+      "TRIPLE",
+      "LITTER",
+      "LITTLE",
+      "TILLER",
+      "LITER"
+    ],
+    "letter_pool": [
+      "T",
+      "R",
+      "I",
+      "P",
+      "L",
+      "E"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "TRIPLE": "Points, assists, and rebounds all in double digits",
+      "LITTER": "Scattered turnovers left across the stat sheet",
+      "LITTLE": "Short in stature but huge in heart for the team",
+      "TILLER": "Player steering the offense like a ship's wheel",
+      "LITER": "Volume of water a player drinks during a game"
+    }
+  },
+  {
+    "id": "nba_hard_1",
+    "theme": "NBA",
+    "display_theme": "NBA",
+    "difficulty": "hard",
+    "words": [
+      "STEAL",
+      "TALES",
+      "SLATE",
+      "LEAST",
+      "TESLA"
+    ],
+    "letter_pool": [
+      "S",
+      "T",
+      "E",
+      "A",
+      "L"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "STEAL": "Picking the ball off an unsuspecting opponent",
+      "TALES": "Stories told about a franchise's legendary seasons",
+      "SLATE": "The full schedule of games across the season",
+      "LEAST": "Team with fewest wins facing the lottery",
+      "TESLA": "Electric speed — buzzing past defenders down the lane"
+    }
+  },
+  {
+    "id": "nba_hard_2",
+    "theme": "NBA",
+    "display_theme": "NBA",
+    "difficulty": "hard",
+    "words": [
+      "POSTER",
+      "TROPES",
+      "REPOST",
+      "PRESTO",
+      "TOPERS"
+    ],
+    "letter_pool": [
+      "P",
+      "O",
+      "S",
+      "T",
+      "E",
+      "R"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "POSTER": "Dunking over a defender so hard it becomes iconic",
+      "TROPES": "Overused storylines in every NBA playoff broadcast",
+      "REPOST": "Sharing a highlight clip that went massively viral",
+      "PRESTO": "Instant magic of a no-look pass catching everyone off guard",
+      "TOPERS": "Players who constantly push the pace of the game"
+    }
+  },
+  {
+    "id": "mlb_easy_1",
+    "theme": "MLB",
+    "display_theme": "MLB",
+    "difficulty": "easy",
+    "words": [
+      "BALL",
+      "TALL",
+      "CALL",
+      "HALL",
+      "FALL"
+    ],
+    "letter_pool": [
+      "B",
+      "A",
+      "L",
+      "T",
+      "C",
+      "H",
+      "F"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "BALL": "Four of these earns a free pass to first base",
+      "TALL": "Height advantage pitchers use to throw downhill",
+      "CALL": "Umpire's ruling on strikes, balls, and plays",
+      "HALL": "Cooperstown destination for the game's greatest players",
+      "FALL": "Season when the World Series is played each year"
+    }
+  },
+  {
+    "id": "mlb_easy_2",
+    "theme": "MLB",
+    "display_theme": "MLB",
+    "difficulty": "easy",
+    "words": [
+      "RUN",
+      "RUIN",
+      "RUNE",
+      "RUNG",
+      "RUSE"
+    ],
+    "letter_pool": [
+      "R",
+      "U",
+      "N",
+      "I",
+      "G",
+      "E",
+      "S"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "RUN": "Scoring a point by crossing home plate",
+      "RUIN": "What one bad inning can do to a pitcher's outing",
+      "RUNE": "Ancient symbol — like mysterious signs in a scouting report",
+      "RUNG": "Step on the ladder toward the major leagues",
+      "RUSE": "Pitcher's deception strategy to fool the batter"
+    }
+  },
+  {
+    "id": "mlb_medium_1",
+    "theme": "MLB",
+    "display_theme": "MLB",
+    "difficulty": "medium",
+    "words": [
+      "SLIDE",
+      "ISLE",
+      "IDLES",
+      "ELIDS",
+      "SIDLE"
+    ],
+    "letter_pool": [
+      "S",
+      "L",
+      "I",
+      "D",
+      "E"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "SLIDE": "Dropping to the ground feet-first to beat a tag",
+      "ISLE": "Narrow aisle between dugout and bullpen benches",
+      "IDLES": "Offense that can't get anything going against a hot pitcher",
+      "ELIDS": "Batter who just barely avoids a pitch inside",
+      "SIDLE": "Infielder shuffling laterally to cut off a ground ball"
+    }
+  },
+  {
+    "id": "mlb_medium_2",
+    "theme": "MLB",
+    "display_theme": "MLB",
+    "difficulty": "medium",
+    "words": [
+      "CATCH",
+      "ATCH",
+      "CHAT",
+      "EACH",
+      "ETCH"
+    ],
+    "letter_pool": [
+      "C",
+      "A",
+      "T",
+      "H",
+      "E"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "CATCH": "Securing the ball in a glove before it hits the ground",
+      "ATCH": "Short exclamation when a fielder just misses a ball",
+      "CHAT": "Mound visit conversation between pitcher and catcher",
+      "EACH": "Every hitter in the lineup gets their turn at bat",
+      "ETCH": "Carve a name into history with a record-breaking performance"
+    }
+  },
+  {
+    "id": "mlb_hard_1",
+    "theme": "MLB",
+    "display_theme": "MLB",
+    "difficulty": "hard",
+    "words": [
+      "OPENER",
+      "REOPEN",
+      "PRONE",
+      "REPONE",
+      "PREEN"
+    ],
+    "letter_pool": [
+      "O",
+      "P",
+      "E",
+      "N",
+      "R"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "OPENER": "First pitcher in a bullpen game strategy",
+      "REOPEN": "Resuming a suspended game from an earlier date",
+      "PRONE": "Lying flat — what pitchers do to rest their shoulder",
+      "REPONE": "Filing an appeal after a disputed umpire call",
+      "PREEN": "Star player fixing their appearance after a home run trot"
+    }
+  },
+  {
+    "id": "mlb_hard_2",
+    "theme": "MLB",
+    "display_theme": "MLB",
+    "difficulty": "hard",
+    "words": [
+      "INNING",
+      "MINING",
+      "LINING",
+      "DINING",
+      "FINING"
+    ],
+    "letter_pool": [
+      "I",
+      "N",
+      "G",
+      "M",
+      "L",
+      "D",
+      "F"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "INNING": "One of nine chances each team gets to score runs",
+      "MINING": "Digging through data to find a pitcher's tendencies",
+      "LINING": "Hitting the ball hard right at a fielder for an out",
+      "DINING": "Team meal tradition before a series opener",
+      "FINING": "League penalizing a player for a rules violation"
+    }
+  },
+  {
+    "id": "hip_hop_easy_1",
+    "theme": "Hip Hop",
+    "display_theme": "Hip Hop",
+    "difficulty": "easy",
+    "words": [
+      "RAP",
+      "BAR",
+      "BRA",
+      "ARP",
+      "PAR"
+    ],
+    "letter_pool": [
+      "R",
+      "A",
+      "P",
+      "B"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "RAP": "Delivering rhythmic rhymes over a beat",
+      "BAR": "Single line of lyrics in a verse",
+      "BRA": "Term of address between close collaborators",
+      "ARP": "Keyboard sound looped into a hip hop track",
+      "PAR": "Expected standard — going beyond it means excellence"
+    }
+  },
+  {
+    "id": "hip_hop_easy_2",
+    "theme": "Hip Hop",
+    "display_theme": "Hip Hop",
+    "difficulty": "easy",
+    "words": [
+      "FLOW",
+      "WOLF",
+      "FOWL",
+      "OWLS",
+      "SLOW"
+    ],
+    "letter_pool": [
+      "F",
+      "L",
+      "O",
+      "W",
+      "S"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "FLOW": "The way a rapper moves through their lyrics",
+      "WOLF": "Lone hungry artist grinding for a record deal",
+      "FOWL": "Something foul — shady label contract trapping an artist",
+      "OWLS": "Night-bird energy — rappers who only record after midnight",
+      "SLOW": "Drawn-out low-tempo beat that lets lyrics breathe"
+    }
+  },
+  {
+    "id": "hip_hop_medium_1",
+    "theme": "Hip Hop",
+    "display_theme": "Hip Hop",
+    "difficulty": "medium",
+    "words": [
+      "VERSE",
+      "SERVE",
+      "VEERS",
+      "SEVER",
+      "EVER"
+    ],
+    "letter_pool": [
+      "V",
+      "E",
+      "R",
+      "S"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "VERSE": "Section of a song where the rapper tells their story",
+      "SERVE": "Delivering bars so hard the crowd can't deny it",
+      "VEERS": "Switching flows mid-song to keep listeners off balance",
+      "SEVER": "Cutting ties with a label after a bad deal",
+      "EVER": "Claiming your verse was the best one on the whole album"
+    }
+  },
+  {
+    "id": "hip_hop_medium_2",
+    "theme": "Hip Hop",
+    "display_theme": "Hip Hop",
+    "difficulty": "medium",
+    "words": [
+      "SAMPLE",
+      "LAMPS",
+      "PALMS",
+      "CLAMP",
+      "SCALP"
+    ],
+    "letter_pool": [
+      "S",
+      "A",
+      "M",
+      "P",
+      "L",
+      "C"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "SAMPLE": "Chopped piece of an old record looped into a new beat",
+      "LAMPS": "Old turntable lamps lighting a DJ booth at night",
+      "PALMS": "Sweaty hands before stepping on stage for the first time",
+      "CLAMP": "Pressing the needle firm so it doesn't skip during a set",
+      "SCALP": "Taking a rapper's reputation in a diss battle"
+    }
+  },
+  {
+    "id": "hip_hop_hard_1",
+    "theme": "Hip Hop",
+    "display_theme": "Hip Hop",
+    "difficulty": "hard",
+    "words": [
+      "GRIOT",
+      "INGOT",
+      "IRONS",
+      "TIGON",
+      "TIRING"
+    ],
+    "letter_pool": [
+      "G",
+      "R",
+      "I",
+      "O",
+      "T",
+      "N"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "GRIOT": "West African oral storyteller who influenced rap culture",
+      "INGOT": "Gold bar — symbol of wealth stacked from music sales",
+      "IRONS": "Pressing your outfit before a major album release event",
+      "TIGON": "Hybrid animal — like a rapper crossing multiple genres",
+      "TIRING": "Grinding through years of rejection before hitting big"
+    }
+  },
+  {
+    "id": "hip_hop_hard_2",
+    "theme": "Hip Hop",
+    "display_theme": "Hip Hop",
+    "difficulty": "hard",
+    "words": [
+      "CYPHER",
+      "HYPER",
+      "CREPHY",
+      "PERCY",
+      "CHEERY"
+    ],
+    "letter_pool": [
+      "C",
+      "Y",
+      "P",
+      "H",
+      "E",
+      "R"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "CYPHER": "Circle of MCs freestyling and trading verses",
+      "HYPER": "Energetic crowd losing their mind at a live show",
+      "CREPHY": "Underground sound mixing creep with hype energy",
+      "PERCY": "Rare name adopted as a rap alias for uniqueness",
+      "CHEERY": "Uplifting hook that keeps the crowd singing along"
+    }
+  },
+  {
+    "id": "python_easy_1",
+    "theme": "Python",
+    "display_theme": "Python",
+    "difficulty": "easy",
+    "words": [
+      "CODE",
+      "COKE",
+      "DECK",
+      "DOCK",
+      "DECO"
+    ],
+    "letter_pool": [
+      "C",
+      "O",
+      "D",
+      "E",
+      "K"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "CODE": "Instructions written for a computer to execute",
+      "COKE": "Caffeinated drink powering late-night debugging sessions",
+      "DECK": "Slide presentation developers dread making",
+      "DOCK": "Container port where Docker images are deployed",
+      "DECO": "Decorating a function using Python's @ syntax"
+    }
+  },
+  {
+    "id": "python_easy_2",
+    "theme": "Python",
+    "display_theme": "Python",
+    "difficulty": "easy",
+    "words": [
+      "LIST",
+      "SILT",
+      "SLIT",
+      "TILS",
+      "LITS"
+    ],
+    "letter_pool": [
+      "L",
+      "I",
+      "S",
+      "T"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "LIST": "Ordered mutable sequence holding multiple values",
+      "SILT": "Residual data clogging up an unoptimized database",
+      "SLIT": "Splitting a string into parts using a delimiter",
+      "TILS": "Short-form logs — things I learned while coding today",
+      "LITS": "Linters flagging issues in badly formatted source files"
+    }
+  },
+  {
+    "id": "python_medium_1",
+    "theme": "Python",
+    "display_theme": "Python",
+    "difficulty": "medium",
+    "words": [
+      "IMPORT",
+      "PRIMO",
+      "ORBIT",
+      "TIMOR",
+      "OPTIC"
+    ],
+    "letter_pool": [
+      "I",
+      "M",
+      "P",
+      "O",
+      "R",
+      "T",
+      "B",
+      "C"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "IMPORT": "Loading an external module into your script",
+      "PRIMO": "Top-tier library every Python developer installs first",
+      "ORBIT": "Looping logic revolving around a central data structure",
+      "TIMOR": "Anxiety before deploying untested code to production",
+      "OPTIC": "Visual output rendered by a data visualization library"
+    }
+  },
+  {
+    "id": "python_medium_2",
+    "theme": "Python",
+    "display_theme": "Python",
+    "difficulty": "medium",
+    "words": [
+      "INDENT",
+      "TINTED",
+      "INTENT",
+      "NETTED",
+      "DENTED"
+    ],
+    "letter_pool": [
+      "I",
+      "N",
+      "D",
+      "E",
+      "T"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "INDENT": "Required whitespace that Python uses to define code blocks",
+      "TINTED": "Syntax highlighting coloring your editor's code view",
+      "INTENT": "Purpose a function is designed to serve in a program",
+      "NETTED": "Captured the expected output in a successful test run",
+      "DENTED": "Performance hit caused by an inefficient nested loop"
+    }
+  },
+  {
+    "id": "python_hard_1",
+    "theme": "Python",
+    "display_theme": "Python",
+    "difficulty": "hard",
+    "words": [
+      "DECORATOR",
+      "CREATOR",
+      "DOCTOR",
+      "ORATED",
+      "TRACED"
+    ],
+    "letter_pool": [
+      "D",
+      "E",
+      "C",
+      "O",
+      "A",
+      "T",
+      "R"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "DECORATOR": "Wraps a function to extend its behavior using @ syntax",
+      "CREATOR": "Developer who authored the original Python language",
+      "DOCTOR": "Debugging expert who diagnoses and fixes runtime errors",
+      "ORATED": "Presented a technical talk at a Python conference",
+      "TRACED": "Followed code execution step by step in a debugger"
+    }
+  },
+  {
+    "id": "python_hard_2",
+    "theme": "Python",
+    "display_theme": "Python",
+    "difficulty": "hard",
+    "words": [
+      "GENERATOR",
+      "RANT",
+      "GONER",
+      "DRONE",
+      "TENOR"
+    ],
+    "letter_pool": [
+      "G",
+      "E",
+      "N",
+      "O",
+      "A",
+      "T",
+      "R",
+      "D"
+    ],
+    "word_count": 5,
+    "generated": "2026-03-30",
+    "model": "claude",
+    "hints": {
+      "GENERATOR": "Function using yield to lazily produce values one at a time",
+      "RANT": "Developer's heated forum post about Python 2 versus Python 3",
+      "GONER": "Variable out of scope and lost to garbage collection",
+      "DRONE": "Automated script running the same task endlessly in background",
+      "TENOR": "Overall tone of clean readable Pythonic code"
+    }
   }
 ]

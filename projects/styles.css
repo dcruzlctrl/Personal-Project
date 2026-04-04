@@ -339,6 +339,91 @@
 
 .divider { height: 1px; background: var(--border-light); margin: 22px 0; }
 
+/* ===== VIEW TOGGLE ===== */
+.view-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.view-toggle-btn {
+    padding: 6px 10px;
+    background: var(--surface);
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    color: var(--text-muted);
+    transition: all .15s;
+    font-family: var(--font);
+    line-height: 1;
+}
+.view-toggle-btn:hover { background: var(--bg); color: var(--text); }
+.view-toggle-btn.active { background: var(--accent); color: white; }
+
+/* ===== PROJECT LIST VIEW ===== */
+.projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+}
+.project-list-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background .15s;
+}
+.project-list-item:last-child { border-bottom: none; }
+.project-list-item:hover { background: var(--bg); }
+.list-item-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+.list-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.list-item-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.list-add-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--accent-light);
+    border-top: 1px solid var(--border);
+}
+.list-add-input {
+    flex: 1;
+    border: 1.5px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+}
+.list-add-input::placeholder { color: var(--text-subtle); }
+.list-add-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 /* ===== NAV BRAND LINK ===== */
 .nav-brand {
     text-decoration: none;

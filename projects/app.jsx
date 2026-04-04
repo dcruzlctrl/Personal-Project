@@ -1,3 +1,40 @@
+// ===== ADD PROJECT INLINE ROW =====
+function AddProjectRow({ user, onSuccess }) {
+    const [name, setName] = React.useState('');
+    const [saving, setSaving] = React.useState(false);
+
+    const submit = async () => {
+        const trimmed = name.trim();
+        if (!trimmed || saving) return;
+        setSaving(true);
+        try {
+            await supabase.from('projects').insert({
+                user_id: user.id, name: trimmed,
+                description: '', status: 'active'
+            });
+            setName('');
+            onSuccess();
+        } catch (err) { console.error(err); }
+        finally { setSaving(false); }
+    };
+
+    return (
+        <div className="list-add-row">
+            <input
+                className="list-add-input"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+                placeholder="New project name…"
+                disabled={saving}
+                autoFocus
+            />
+            <span className="list-add-hint">↵ Enter to add</span>
+        </div>
+    );
+}
+
 // ===== MAIN APP =====
 function App() {
     const [user, setUser]               = React.useState(null);
@@ -60,6 +97,7 @@ function ProjectsView({ user, onSelectProject }) {
     const [projects, setProjects]           = React.useState([]);
     const [loading, setLoading]             = React.useState(true);
     const [showNewModal, setShowNewModal]   = React.useState(false);
+    const [viewMode, setViewMode]           = React.useState(() => localStorage.getItem('projectViewMode') || 'grid');
     const [projectSortBy, setProjectSortBy] = React.useState(() => {
         return localStorage.getItem('projectSortBy') || 'created';
     });
@@ -74,6 +112,10 @@ function ProjectsView({ user, onSelectProject }) {
     React.useEffect(() => {
         localStorage.setItem('projectSortBy', projectSortBy);
     }, [projectSortBy]);
+
+    React.useEffect(() => {
+        localStorage.setItem('projectViewMode', viewMode);
+    }, [viewMode]);
 
     const loadProjects = async () => {
         try {
@@ -147,9 +189,15 @@ function ProjectsView({ user, onSelectProject }) {
                         <option value="tasks">Most Tasks</option>
                         <option value="name">Name (A-Z)</option>
                     </select>
-                    <button className="btn-action btn-action-primary" onClick={() => setShowNewModal(true)}>
-                        + New Project
-                    </button>
+                    <div className="view-toggle">
+                        <button className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid view">⊞</button>
+                        <button className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List view">☰</button>
+                    </div>
+                    {viewMode === 'grid' && (
+                        <button className="btn-action btn-action-primary" onClick={() => setShowNewModal(true)}>
+                            + New Project
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -162,21 +210,34 @@ function ProjectsView({ user, onSelectProject }) {
                 <div className="stat-card c-red">   <div className="stat-num">{stats.upcomingTasks}</div>   <div className="stat-lbl">Due in 7 Days</div></div>
             </div>
 
-            {projects.length === 0 ? (
-                <div className="empty">
-                    <div className="empty-icon">📋</div>
-                    <div className="empty-title">No projects yet</div>
-                    <div className="empty-desc">Create your first project to get started</div>
-                </div>
+            {viewMode === 'grid' ? (
+                projects.length === 0 ? (
+                    <div className="empty">
+                        <div className="empty-icon">📋</div>
+                        <div className="empty-title">No projects yet</div>
+                        <div className="empty-desc">Create your first project to get started</div>
+                    </div>
+                ) : (
+                    <div className="cards-grid">
+                        {getSortedProjects().map(p => (
+                            <ProjectCard key={p.id} project={p}
+                                onSelect={() => onSelectProject(p)}
+                                onDelete={() => deleteProject(p.id)}
+                                onRefresh={loadProjects}
+                            />
+                        ))}
+                    </div>
+                )
             ) : (
-                <div className="cards-grid">
+                <div className="projects-list">
                     {getSortedProjects().map(p => (
-                        <ProjectCard key={p.id} project={p}
+                        <ProjectListItem key={p.id} project={p}
                             onSelect={() => onSelectProject(p)}
                             onDelete={() => deleteProject(p.id)}
                             onRefresh={loadProjects}
                         />
                     ))}
+                    <AddProjectRow user={user} onSuccess={loadProjects} />
                 </div>
             )}
 
@@ -195,6 +256,43 @@ function ProjectsView({ user, onSelectProject }) {
             loadProjects();
         }
     }
+}
+
+// ===== PROJECT LIST ITEM =====
+function ProjectListItem({ project, onSelect, onDelete, onRefresh }) {
+    const [taskCount, setTaskCount]         = React.useState(0);
+    const [showEditModal, setShowEditModal] = React.useState(false);
+
+    React.useEffect(() => {
+        supabase.from('tasks').select('*', { count: 'exact' })
+            .eq('project_id', project.id)
+            .then(({ count }) => setTaskCount(count || 0));
+    }, [project.id]);
+
+    return (
+        <>
+            <div className="project-list-item" onClick={onSelect}>
+                <div className="list-item-name">{project.name}</div>
+                <div className="list-item-meta">
+                    <span className={`badge badge-${project.status}`}>{project.status}</span>
+                    <span className="card-meta-text">{taskCount} task{taskCount !== 1 ? 's' : ''}</span>
+                    {project.end_date && (
+                        <span className="card-meta-text">· Due {formatESTDate(new Date(project.end_date))}</span>
+                    )}
+                </div>
+                <div className="list-item-actions" onClick={(e) => e.stopPropagation()}>
+                    <button className="btn-sm btn-sm-warning" onClick={() => setShowEditModal(true)}>Edit</button>
+                    <button className="btn-sm btn-sm-danger"  onClick={onDelete}>Delete</button>
+                </div>
+            </div>
+            {showEditModal && (
+                <EditProjectModal project={project}
+                    onClose={() => setShowEditModal(false)}
+                    onSuccess={() => { setShowEditModal(false); onRefresh(); }}
+                />
+            )}
+        </>
+    );
 }
 
 // ===== PROJECT CARD =====

@@ -1,10 +1,17 @@
-// ===== DAILY NOTES VIEW =====
-function DailyNotesView({ user, projects }) {
+// ===== DAILY NOTES VIEW (full-screen overlay) =====
+function DailyNotesView({ user, projects, onClose }) {
     const [viewDate, setViewDate] = React.useState(getNYCDate());
     const [notes, setNotes]       = React.useState({});
     const [saving, setSaving]     = React.useState({});
 
-    React.useEffect(() => { loadNotes(); }, [viewDate]);
+    React.useEffect(() => { loadNotes(); }, [viewDate, projects.length]);
+
+    // Close on Escape
+    React.useEffect(() => {
+        const handler = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, []);
 
     const loadNotes = async () => {
         if (!projects.length) return;
@@ -34,10 +41,7 @@ function DailyNotesView({ user, projects }) {
     const shiftDate = (delta) => {
         const d = new Date(viewDate + 'T12:00:00');
         d.setDate(d.getDate() + delta);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        setViewDate(y + '-' + m + '-' + day);
+        setViewDate([d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'));
     };
 
     const isToday = viewDate === getNYCDate();
@@ -48,44 +52,49 @@ function DailyNotesView({ user, projects }) {
     })();
 
     return (
-        <div className="daily-notes-wrap">
-            <div className="daily-notes-header">
-                <button className="dn-nav-btn" onClick={() => shiftDate(-1)}>← Prev</button>
-                <div className="dn-date-display">
+        <div className="dn-fullscreen">
+            <div className="dn-fs-header">
+                <div className="dn-fs-left">
+                    <span className="dn-fs-title">📝 Daily Notes</span>
+                    <button className="dn-nav-btn" onClick={() => shiftDate(-1)}>← Prev</button>
                     <span className="dn-date-label">{displayDate}</span>
                     {!isToday && (
                         <button className="dn-today-btn" onClick={() => setViewDate(getNYCDate())}>Today</button>
                     )}
+                    <button className="dn-nav-btn" onClick={() => shiftDate(1)} disabled={isToday}>Next →</button>
                 </div>
-                <button className="dn-nav-btn" onClick={() => shiftDate(1)} disabled={isToday}>Next →</button>
+                <button className="dn-close-btn" onClick={onClose} title="Close (Esc)">✕ Close</button>
             </div>
 
-            <div className="dn-table">
-                <div className="dn-table-head">
-                    <div className="dn-col-project">Project</div>
-                    <div className="dn-col-note">Notes / Updates</div>
-                </div>
-                {projects.map(p => (
-                    <div key={p.id} className="dn-row">
-                        <div className="dn-col-project">
-                            <span className={`dn-project-name ${p.status !== 'active' ? 'dn-inactive' : ''}`}>{p.name}</span>
-                            {p.status !== 'active' && <span className="dn-status-tag">{p.status}</span>}
-                        </div>
-                        <div className="dn-col-note">
-                            <textarea
-                                className="dn-textarea"
-                                value={notes[p.id] || ''}
-                                onChange={(e) => saveNote(p.id, e.target.value)}
-                                placeholder="Add update…"
-                                rows={2}
-                            />
-                            {saving[p.id] && <span className="dn-saving">saving…</span>}
-                        </div>
+            <div className="dn-fs-body">
+                <div className="dn-table">
+                    <div className="dn-table-head">
+                        <div className="dn-col-project">Project</div>
+                        <div className="dn-col-note">Notes / Updates</div>
                     </div>
-                ))}
-                {projects.length === 0 && (
-                    <div className="dn-empty">No projects yet. Add some projects first.</div>
-                )}
+                    <div className="dn-table-body">
+                        {projects.map(p => (
+                            <div key={p.id} className="dn-row">
+                                <div className="dn-col-project">
+                                    <span className={`dn-project-name ${p.status !== 'active' ? 'dn-inactive' : ''}`}>{p.name}</span>
+                                    {p.status !== 'active' && <span className="dn-status-tag">{p.status}</span>}
+                                </div>
+                                <div className="dn-col-note">
+                                    <textarea
+                                        className="dn-textarea"
+                                        value={notes[p.id] || ''}
+                                        onChange={(e) => saveNote(p.id, e.target.value)}
+                                        placeholder="Add update…"
+                                    />
+                                    {saving[p.id] && <span className="dn-saving">saving…</span>}
+                                </div>
+                            </div>
+                        ))}
+                        {projects.length === 0 && (
+                            <div className="dn-empty">No projects yet. Add some projects first.</div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -135,6 +144,7 @@ function App() {
     const [view, setView]               = React.useState('projects');
     const [selectedProject, setSelectedProject] = React.useState(null);
     const [allProjects, setAllProjects] = React.useState([]);
+    const [showDailyNotes, setShowDailyNotes] = React.useState(false);
 
     React.useEffect(() => {
         checkUser();
@@ -165,8 +175,8 @@ function App() {
                         <button className="nav-link" onClick={() => setView('projects')}>← Projects</button>
                     )}
                     <button
-                        className={`nav-link ${view === 'daily-notes' ? 'nav-link-active' : ''}`}
-                        onClick={() => setView(view === 'daily-notes' ? 'projects' : 'daily-notes')}
+                        className={`nav-link ${showDailyNotes ? 'nav-link-active' : ''}`}
+                        onClick={() => setShowDailyNotes(v => !v)}
                     >📝 Daily Notes</button>
                     <a href="habits.html" className="nav-link">🎯 Habits</a>
                     <a href="crossword.html" className="nav-link">🧩 Crossword</a>
@@ -184,10 +194,10 @@ function App() {
                 {view === 'project-detail' && (
                     <ProjectDetailView project={selectedProject} onBack={() => setView('projects')} />
                 )}
-                {view === 'daily-notes' && (
-                    <DailyNotesView user={user} projects={allProjects} />
-                )}
             </div>
+            {showDailyNotes && (
+                <DailyNotesView user={user} projects={allProjects} onClose={() => setShowDailyNotes(false)} />
+            )}
         </div>
     );
 

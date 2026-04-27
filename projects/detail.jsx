@@ -2,6 +2,7 @@
 function ProjectDetailView({ project, onBack }) {
     const [tasks, setTasks]               = React.useState([]);
     const [files, setFiles]               = React.useState([]);
+    const [projectNotes, setProjectNotes] = React.useState([]);
     const [loading, setLoading]           = React.useState(true);
     const [showNewTaskModal, setShowNewTaskModal] = React.useState(false);
 
@@ -9,12 +10,17 @@ function ProjectDetailView({ project, onBack }) {
 
     const loadData = async () => {
         try {
-            const [td, fd] = await Promise.all([
+            const [td, fd, nd] = await Promise.all([
                 supabase.from('tasks').select('*').eq('project_id', project.id),
-                supabase.from('file_uploads').select('*').eq('project_id', project.id)
+                supabase.from('file_uploads').select('*').eq('project_id', project.id),
+                supabase.from('project_notes').select('note_date, note')
+                    .eq('project_id', project.id)
+                    .neq('note', '')
+                    .order('note_date', { ascending: false })
             ]);
             setTasks(td.data || []);
             setFiles(fd.data || []);
+            setProjectNotes(nd.data || []);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
@@ -52,6 +58,28 @@ function ProjectDetailView({ project, onBack }) {
                             onRefresh={loadData}
                         />
                     ))}
+                </div>
+            )}
+
+            <div className="divider"></div>
+            <div className="section-label">Daily Notes</div>
+
+            {projectNotes.length === 0 ? (
+                <div style={{ color: 'var(--text-subtle)', fontSize: '13px', padding: '10px 0 20px' }}>
+                    No notes yet — add updates via 📝 Daily Notes in the nav.
+                </div>
+            ) : (
+                <div className="proj-notes-list">
+                    {projectNotes.map(n => {
+                        const d = new Date(n.note_date + 'T12:00:00');
+                        const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                        return (
+                            <div key={n.note_date} className="proj-note-entry">
+                                <div className="proj-note-date">{label}</div>
+                                <div className="proj-note-text">{n.note}</div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 

@@ -1,3 +1,96 @@
+// ===== DAILY NOTES VIEW =====
+function DailyNotesView({ user, projects }) {
+    const [viewDate, setViewDate] = React.useState(getNYCDate());
+    const [notes, setNotes]       = React.useState({});
+    const [saving, setSaving]     = React.useState({});
+
+    React.useEffect(() => { loadNotes(); }, [viewDate]);
+
+    const loadNotes = async () => {
+        if (!projects.length) return;
+        const { data } = await supabase
+            .from('project_notes')
+            .select('project_id, note')
+            .eq('user_id', user.id)
+            .eq('note_date', viewDate);
+        const map = {};
+        (data || []).forEach(r => { map[r.project_id] = r.note; });
+        setNotes(map);
+    };
+
+    const saveNote = async (projectId, value) => {
+        setNotes(prev => ({ ...prev, [projectId]: value }));
+        setSaving(prev => ({ ...prev, [projectId]: true }));
+        await supabase.from('project_notes').upsert({
+            user_id: user.id,
+            project_id: projectId,
+            note_date: viewDate,
+            note: value,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'project_id,note_date' });
+        setSaving(prev => ({ ...prev, [projectId]: false }));
+    };
+
+    const shiftDate = (delta) => {
+        const d = new Date(viewDate + 'T12:00:00');
+        d.setDate(d.getDate() + delta);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        setViewDate(y + '-' + m + '-' + day);
+    };
+
+    const isToday = viewDate === getNYCDate();
+
+    const displayDate = (() => {
+        const d = new Date(viewDate + 'T12:00:00');
+        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    })();
+
+    return (
+        <div className="daily-notes-wrap">
+            <div className="daily-notes-header">
+                <button className="dn-nav-btn" onClick={() => shiftDate(-1)}>← Prev</button>
+                <div className="dn-date-display">
+                    <span className="dn-date-label">{displayDate}</span>
+                    {!isToday && (
+                        <button className="dn-today-btn" onClick={() => setViewDate(getNYCDate())}>Today</button>
+                    )}
+                </div>
+                <button className="dn-nav-btn" onClick={() => shiftDate(1)} disabled={isToday}>Next →</button>
+            </div>
+
+            <div className="dn-table">
+                <div className="dn-table-head">
+                    <div className="dn-col-project">Project</div>
+                    <div className="dn-col-note">Notes / Updates</div>
+                </div>
+                {projects.map(p => (
+                    <div key={p.id} className="dn-row">
+                        <div className="dn-col-project">
+                            <span className={`dn-project-name ${p.status !== 'active' ? 'dn-inactive' : ''}`}>{p.name}</span>
+                            {p.status !== 'active' && <span className="dn-status-tag">{p.status}</span>}
+                        </div>
+                        <div className="dn-col-note">
+                            <textarea
+                                className="dn-textarea"
+                                value={notes[p.id] || ''}
+                                onChange={(e) => saveNote(p.id, e.target.value)}
+                                placeholder="Add update…"
+                                rows={2}
+                            />
+                            {saving[p.id] && <span className="dn-saving">saving…</span>}
+                        </div>
+                    </div>
+                ))}
+                {projects.length === 0 && (
+                    <div className="dn-empty">No projects yet. Add some projects first.</div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ===== ADD PROJECT INLINE ROW =====
 function AddProjectRow({ user, onSuccess }) {
     const [name, setName] = React.useState('');
@@ -41,6 +134,7 @@ function App() {
     const [loading, setLoading]         = React.useState(true);
     const [view, setView]               = React.useState('projects');
     const [selectedProject, setSelectedProject] = React.useState(null);
+    const [allProjects, setAllProjects] = React.useState([]);
 
     React.useEffect(() => {
         checkUser();
@@ -70,6 +164,10 @@ function App() {
                     {view !== 'projects' && (
                         <button className="nav-link" onClick={() => setView('projects')}>← Projects</button>
                     )}
+                    <button
+                        className={`nav-link ${view === 'daily-notes' ? 'nav-link-active' : ''}`}
+                        onClick={() => setView(view === 'daily-notes' ? 'projects' : 'daily-notes')}
+                    >📝 Daily Notes</button>
                     <a href="habits.html" className="nav-link">🎯 Habits</a>
                     <a href="crossword.html" className="nav-link">🧩 Crossword</a>
                     <a href="dnd-crosswords/index.html" className="nav-link">🐉 D&D Crossword</a>
@@ -77,10 +175,17 @@ function App() {
                 </div>
             </nav>
             <div className="content">
-                {view === 'projects' ? (
-                    <ProjectsView user={user} onSelectProject={(p) => { setSelectedProject(p); setView('project-detail'); }} />
-                ) : (
+                {view === 'projects' && (
+                    <ProjectsView user={user}
+                        onSelectProject={(p) => { setSelectedProject(p); setView('project-detail'); }}
+                        onProjectsLoaded={setAllProjects}
+                    />
+                )}
+                {view === 'project-detail' && (
                     <ProjectDetailView project={selectedProject} onBack={() => setView('projects')} />
+                )}
+                {view === 'daily-notes' && (
+                    <DailyNotesView user={user} projects={allProjects} />
                 )}
             </div>
         </div>
@@ -93,7 +198,7 @@ function App() {
 }
 
 // ===== PROJECTS VIEW =====
-function ProjectsView({ user, onSelectProject }) {
+function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
     const [projects, setProjects]           = React.useState([]);
     const [loading, setLoading]             = React.useState(true);
     const [showNewModal, setShowNewModal]   = React.useState(false);
@@ -125,6 +230,7 @@ function ProjectsView({ user, onSelectProject }) {
                 .order('created_at', { ascending: false });
             if (error) throw error;
             setProjects(data || []);
+            if (onProjectsLoaded) onProjectsLoaded(data || []);
 
             const ids = (data || []).map(p => p.id);
             if (ids.length > 0) {

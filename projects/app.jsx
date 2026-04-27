@@ -105,6 +105,23 @@ function App() {
     }
 }
 
+// ===== LAST ACTIVITY HELPER =====
+function formatLastActivity(isoString) {
+    if (!isoString) return null;
+    const then = new Date(isoString);
+    const now  = new Date();
+    const diffMs  = now - then;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffH   = Math.floor(diffMin / 60);
+    const diffD   = Math.floor(diffH / 24);
+    if (diffMin < 1)  return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffH < 24)   return `${diffH}h ago`;
+    if (diffD === 1)  return 'yesterday';
+    if (diffD < 7)    return `${diffD}d ago`;
+    return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 // ===== PROJECTS VIEW =====
 function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
     const [projects, setProjects]           = React.useState([]);
@@ -114,6 +131,7 @@ function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
     const [projectSortBy, setProjectSortBy] = React.useState(() => {
         return localStorage.getItem('projectSortBy') || 'created';
     });
+    const [lastActivity, setLastActivity]   = React.useState({});
     const [stats, setStats] = React.useState({
         activeProjects: 0, totalTasks: 0,
         pendingTasks: 0, inProgressTasks: 0,
@@ -142,8 +160,12 @@ function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
 
             const ids = (data || []).map(p => p.id);
             if (ids.length > 0) {
-                const { data: td, error: te } = await supabase
-                    .from('tasks').select('status, due_date').in('project_id', ids);
+                const [{ data: td, error: te }, { data: taskDates }, { data: noteDates }] = await Promise.all([
+                    supabase.from('tasks').select('status, due_date').in('project_id', ids),
+                    supabase.from('tasks').select('project_id, created_at').in('project_id', ids),
+                    supabase.from('project_notes').select('project_id, updated_at').in('project_id', ids).neq('note', '')
+                ]);
+
                 if (!te && td) {
                     const today = new Date();
                     const in7 = new Date(today.getTime() + 7 * 864e5);
@@ -160,8 +182,21 @@ function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
                         }).length
                     });
                 }
+
+                // Build lastActivity map: max(task updated_at, note updated_at) per project
+                const activityMap = {};
+                (taskDates || []).forEach(r => {
+                    if (!activityMap[r.project_id] || r.created_at > activityMap[r.project_id])
+                        activityMap[r.project_id] = r.created_at;
+                });
+                (noteDates || []).forEach(r => {
+                    if (!activityMap[r.project_id] || r.updated_at > activityMap[r.project_id])
+                        activityMap[r.project_id] = r.updated_at;
+                });
+                setLastActivity(activityMap);
             } else {
                 setStats({ activeProjects: 0, totalTasks: 0, pendingTasks: 0, inProgressTasks: 0, completedTasks: 0, upcomingTasks: 0 });
+                setLastActivity({});
             }
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
@@ -235,6 +270,7 @@ function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
                     <div className="cards-grid">
                         {getSortedProjects().map(p => (
                             <ProjectCard key={p.id} project={p}
+                                lastActivity={lastActivity[p.id]}
                                 onSelect={() => onSelectProject(p)}
                                 onDelete={() => deleteProject(p.id)}
                                 onRefresh={loadProjects}
@@ -246,6 +282,7 @@ function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
                 <div className="projects-list">
                     {getSortedProjects().map(p => (
                         <ProjectListItem key={p.id} project={p}
+                            lastActivity={lastActivity[p.id]}
                             onSelect={() => onSelectProject(p)}
                             onDelete={() => deleteProject(p.id)}
                             onRefresh={loadProjects}
@@ -273,7 +310,7 @@ function ProjectsView({ user, onSelectProject, onProjectsLoaded }) {
 }
 
 // ===== PROJECT LIST ITEM =====
-function ProjectListItem({ project, onSelect, onDelete, onRefresh }) {
+function ProjectListItem({ project, lastActivity, onSelect, onDelete, onRefresh }) {
     const [taskCount, setTaskCount]         = React.useState(0);
     const [showEditModal, setShowEditModal] = React.useState(false);
 
@@ -282,6 +319,8 @@ function ProjectListItem({ project, onSelect, onDelete, onRefresh }) {
             .eq('project_id', project.id)
             .then(({ count }) => setTaskCount(count || 0));
     }, [project.id]);
+
+    const activityLabel = formatLastActivity(lastActivity);
 
     return (
         <>
@@ -292,6 +331,9 @@ function ProjectListItem({ project, onSelect, onDelete, onRefresh }) {
                     <span className="card-meta-text">{taskCount} task{taskCount !== 1 ? 's' : ''}</span>
                     {project.end_date && (
                         <span className="card-meta-text">· Due {formatESTDate(new Date(project.end_date))}</span>
+                    )}
+                    {activityLabel && (
+                        <span className="last-activity-tag">· {activityLabel}</span>
                     )}
                 </div>
                 <div className="list-item-actions" onClick={(e) => e.stopPropagation()}>
@@ -310,7 +352,7 @@ function ProjectListItem({ project, onSelect, onDelete, onRefresh }) {
 }
 
 // ===== PROJECT CARD =====
-function ProjectCard({ project, onSelect, onDelete, onRefresh }) {
+function ProjectCard({ project, lastActivity, onSelect, onDelete, onRefresh }) {
     const [taskCount, setTaskCount]       = React.useState(0);
     const [showEditModal, setShowEditModal] = React.useState(false);
 
@@ -320,10 +362,15 @@ function ProjectCard({ project, onSelect, onDelete, onRefresh }) {
             .then(({ count }) => setTaskCount(count || 0));
     }, [project.id]);
 
+    const activityLabel = formatLastActivity(lastActivity);
+
     return (
         <>
             <div className="project-card" onClick={onSelect}>
-                <div className="card-title">{project.name}</div>
+                <div className="card-title-row">
+                    <div className="card-title">{project.name}</div>
+                    {activityLabel && <span className="last-activity-tag">{activityLabel}</span>}
+                </div>
                 <div className="card-desc">{project.description || 'No description'}</div>
                 <div className="card-footer">
                     <div className="card-meta">

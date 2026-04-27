@@ -446,68 +446,87 @@
     overflow: hidden;
 }
 
+/* title bar — one clean row */
 .dn-fs-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 24px;
+    padding: 11px 20px;
     background: #1e3a5f;
-    border-bottom: 1px solid rgba(255,255,255,.1);
+    border-bottom: 1px solid rgba(255,255,255,.08);
     flex-shrink: 0;
-    gap: 16px;
-}
-
-.dn-fs-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
 }
 
 .dn-fs-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    color: white;
-    letter-spacing: -0.2px;
-    margin-right: 6px;
+    color: rgba(255,255,255,.9);
+    letter-spacing: -0.1px;
+}
+
+/* date nav row — centered date, arrows on sides */
+.dn-date-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #162d4a;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.dn-date-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
 }
 
 .dn-date-label {
-    font-size: 15px;
-    font-weight: 600;
-    color: rgba(255,255,255,.9);
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+    text-align: center;
 }
 
-.dn-nav-btn {
-    padding: 6px 14px;
-    border: 1px solid rgba(255,255,255,.25);
-    border-radius: var(--radius-sm);
-    background: rgba(255,255,255,.08);
-    color: rgba(255,255,255,.85);
-    font-size: 13px;
-    font-weight: 600;
-    font-family: var(--font);
+.dn-arrow-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.8);
+    font-size: 24px;
+    line-height: 1;
     cursor: pointer;
     transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: var(--font);
 }
-.dn-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,.18); color: white; }
-.dn-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.dn-arrow-btn:hover:not(:disabled) { background: rgba(255,255,255,.18); color: white; }
+.dn-arrow-btn:disabled { opacity: 0.2; cursor: default; }
 
 .dn-today-btn {
-    padding: 4px 10px;
-    border: 1px solid rgba(255,255,255,.4);
-    border-radius: var(--radius-sm);
-    background: rgba(255,255,255,.12);
-    color: white;
+    padding: 3px 10px;
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    background: rgba(255,255,255,.1);
+    color: rgba(255,255,255,.8);
     font-size: 11px;
     font-weight: 700;
     font-family: var(--font);
     cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: .4px;
+    letter-spacing: .5px;
     transition: all .15s;
 }
-.dn-today-btn:hover { background: rgba(255,255,255,.25); }
+.dn-today-btn:hover { background: rgba(255,255,255,.2); color: white; }
 
 .dn-close-btn {
     padding: 7px 16px;

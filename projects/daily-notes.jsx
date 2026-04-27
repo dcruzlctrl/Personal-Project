@@ -3,6 +3,7 @@ function DailyNotesView({ user, projects, onClose }) {
     const [viewDate, setViewDate] = React.useState(getNYCDate());
     const [notes, setNotes]       = React.useState({});
     const [saving, setSaving]     = React.useState({});
+    const touchStartX = React.useRef(null);
 
     React.useEffect(() => { loadNotes(); }, [viewDate, projects.length]);
 
@@ -44,6 +45,19 @@ function DailyNotesView({ user, projects, onClose }) {
         setViewDate([d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-'));
     };
 
+    const handleTouchStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e) => {
+        if (touchStartX.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        touchStartX.current = null;
+        if (Math.abs(dx) < 50) return; // too short, ignore
+        if (dx < 0) shiftDate(1);  // swipe left = next day
+        else if (viewDate !== getNYCDate() || dx > 0) shiftDate(-1); // swipe right = prev day
+    };
+
     const isToday = viewDate === getNYCDate();
 
     const displayDate = (() => {
@@ -52,20 +66,27 @@ function DailyNotesView({ user, projects, onClose }) {
     })();
 
     return (
-        <div className="dn-fullscreen">
+        <div className="dn-fullscreen" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+
+            {/* ── Title bar ── */}
             <div className="dn-fs-header">
-                <div className="dn-fs-left">
-                    <span className="dn-fs-title">📝 Daily Notes</span>
-                    <button className="dn-nav-btn" onClick={() => shiftDate(-1)}>← Prev</button>
-                    <span className="dn-date-label">{displayDate}</span>
-                    {!isToday && (
-                        <button className="dn-today-btn" onClick={() => setViewDate(getNYCDate())}>Today</button>
-                    )}
-                    <button className="dn-nav-btn" onClick={() => shiftDate(1)} disabled={isToday}>Next →</button>
-                </div>
+                <span className="dn-fs-title">📝 Daily Notes</span>
                 <button className="dn-close-btn" onClick={onClose} title="Close (Esc)">✕ Close</button>
             </div>
 
+            {/* ── Date nav ── */}
+            <div className="dn-date-nav">
+                <button className="dn-arrow-btn" onClick={() => shiftDate(-1)}>‹</button>
+                <div className="dn-date-center">
+                    <div className="dn-date-label">{displayDate}</div>
+                    {!isToday && (
+                        <button className="dn-today-btn" onClick={() => setViewDate(getNYCDate())}>Today</button>
+                    )}
+                </div>
+                <button className="dn-arrow-btn" onClick={() => shiftDate(1)} disabled={isToday}>›</button>
+            </div>
+
+            {/* ── Table ── */}
             <div className="dn-fs-body">
                 <div className="dn-table">
                     <div className="dn-table-head">

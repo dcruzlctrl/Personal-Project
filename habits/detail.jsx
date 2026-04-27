@@ -9,6 +9,23 @@ function HabitDetailModal({ habit, onClose, onRefresh }) {
     const [notes, setNotes]         = React.useState([]);
     const [newNote, setNewNote]     = React.useState('');
     const [savingNote, setSavingNote] = React.useState(false);
+    const [editingName, setEditingName] = React.useState(false);
+    const [nameValue, setNameValue]     = React.useState(habit.name);
+    const nameInputRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (editingName) nameInputRef.current?.select();
+    }, [editingName]);
+
+    const handleSaveName = async () => {
+        const trimmed = nameValue.trim();
+        if (!trimmed || trimmed === habit.name) { setEditingName(false); setNameValue(habit.name); return; }
+        try {
+            await supabase.from('habits').update({ name: trimmed }).eq('id', habit.id);
+            onRefresh();
+        } catch (err) { console.error(err); }
+        setEditingName(false);
+    };
 
     React.useEffect(() => { setResetDaily(habit.reset_daily); }, [habit.reset_daily]);
     React.useEffect(() => { loadLogs(); loadNotes(); }, [habit.id]);
@@ -104,7 +121,20 @@ function HabitDetailModal({ habit, onClose, onRefresh }) {
         <div className="modal-overlay">
             <div className="modal-box">
                 <div className="modal-head">
-                    <div className="modal-title">{habit.name}</div>
+                    {editingName ? (
+                        <input
+                            ref={nameInputRef}
+                            className="modal-title-input"
+                            value={nameValue}
+                            onChange={e => setNameValue(e.target.value)}
+                            onBlur={handleSaveName}
+                            onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') { setEditingName(false); setNameValue(habit.name); } }}
+                        />
+                    ) : (
+                        <div className="modal-title modal-title-editable" onClick={() => setEditingName(true)} title="Click to rename">
+                            {nameValue} <span className="edit-pencil">✎</span>
+                        </div>
+                    )}
                     <button className="modal-close" onClick={onClose}>✕</button>
                 </div>
 
